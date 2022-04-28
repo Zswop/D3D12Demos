@@ -23,6 +23,8 @@ struct MatIndexConstants
 struct SRVIndexConstants
 {
 	uint MaterialTextureIndicesIdx;
+	uint SpecularCubemapLookupIdx;
+	uint SpecularCubemapIdx;
 };
 
 ConstantBuffer<VSConstants> VSCBuffer : register(b0);
@@ -37,6 +39,7 @@ ConstantBuffer<SRVIndexConstants> SRVIndices : register(b2);
 StructuredBuffer<MaterialTextureIndices> MaterialIndicesBuffers[] : register(t0, space100);
 
 SamplerState AnisoSampler : register(s0);
+SamplerState LinearSampler : register(s1);
 
 //=================================================================================================
 // Input/Output structs
@@ -133,7 +136,10 @@ float4 PSForward(in PSInput input) : SV_Target
 
 	shadingInput.ShadingCBuffer = PSCBuffer;
 	
-	float3 shadingResult = ShadePixel(shadingInput);
+	Texture2D SpecularLUT = Tex2DTable[SRVIndices.SpecularCubemapLookupIdx];
+	TextureCube SpecularCubemap = TexCubeTable[SRVIndices.SpecularCubemapIdx];
+
+	float3 shadingResult = ShadePixel(shadingInput, SpecularCubemap, SpecularLUT, LinearSampler);
 
 	//float nDotL = dot(sunDirectionWS, normalWS);
 	//return float4(nDotL, nDotL, nDotL, nDotL);

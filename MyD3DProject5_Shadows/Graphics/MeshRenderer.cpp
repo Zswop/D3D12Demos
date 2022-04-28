@@ -33,6 +33,8 @@ struct SRVIndexConstants
 {
 	uint32 sunShadowMapIdx;
 	uint32 MaterialTextureIndicesIdx;
+	uint32 SpecularCubemapLookupIdx;
+	uint32 SpecularCubemapIdx;
 };
 
 struct MaterialTextureIndices
@@ -144,9 +146,10 @@ void MeshRenderer::Initialize(const Model* model_)
 		rootParameters[MainPass_SRVIndices].Descriptor.ShaderRegister = 3;
 		rootParameters[MainPass_SRVIndices].Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC;
 
-		D3D12_STATIC_SAMPLER_DESC staticSamplers[2] = {};
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[3] = {};
 		staticSamplers[0] = DX12::GetStaticSamplerState(SamplerState::Anisotropic, 0);
-		staticSamplers[1] = DX12::GetStaticSamplerState(SamplerState::ShadowMapPCF, 1);
+		staticSamplers[1] = DX12::GetStaticSamplerState(SamplerState::Linear, 1);
+		staticSamplers[2] = DX12::GetStaticSamplerState(SamplerState::ShadowMapPCF, 2);
 		
 		D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
 		rootSignatureDesc.NumParameters = ArraySize_(rootParameters);
@@ -282,6 +285,8 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 	SRVIndexConstants SRVIndexConstants;
 	SRVIndexConstants.sunShadowMapIdx = sunShadowMap.SRV();
 	SRVIndexConstants.MaterialTextureIndicesIdx = materialTextureIndices.SRV;
+	SRVIndexConstants.SpecularCubemapLookupIdx = mainPassData.SpecularLUT->SRV;
+	SRVIndexConstants.SpecularCubemapIdx = mainPassData.SpecularCubMap->SRV;
 	DX12::BindTempConstantBuffer(cmdList, SRVIndexConstants, MainPass_SRVIndices, CmdListMode::Graphics);
 
 	// Bind vertices and indices

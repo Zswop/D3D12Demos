@@ -15,6 +15,8 @@ struct SkyCache;
 struct MainPassData
 {
 	const SkyCache* SkyCache = nullptr;
+	const Texture* SpecularLUT = nullptr;
+	const Texture* SpecularCubMap = nullptr;
 	SH9Color EnvSH;
 };
 

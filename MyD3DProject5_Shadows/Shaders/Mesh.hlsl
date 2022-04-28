@@ -24,6 +24,8 @@ struct SRVIndexConstants
 {
 	uint SunShadowMapIdx;
 	uint MaterialTextureIndicesIdx;
+	uint SpecularCubemapLookupIdx;
+	uint SpecularCubemapIdx;
 };
 
 ConstantBuffer<VSConstants> VSCBuffer : register(b0);
@@ -39,7 +41,8 @@ ConstantBuffer<SRVIndexConstants> SRVIndices : register(b3);
 StructuredBuffer<MaterialTextureIndices> MaterialIndicesBuffers[] : register(t0, space100);
 
 SamplerState AnisoSampler : register(s0);
-SamplerComparisonState ShadowMapSampler : register(s1);
+SamplerState LinearSampler : register(s1);
+SamplerComparisonState ShadowMapSampler : register(s2);
 
 //=================================================================================================
 // Input/Output structs
@@ -123,7 +126,7 @@ float4 PSForward(in PSInput input) : SV_Target
 	Texture2D NormalMap = Tex2DTable[matIndices.Normal];
 	Texture2D RoughnessMap = Tex2DTable[matIndices.Roughness];
 	Texture2D MetallicMap = Tex2DTable[matIndices.Metallic];
-
+	
 	ShadingInput shadingInput;
 	shadingInput.PositionWS = input.PositionWS;
 	shadingInput.DepthVS = input.DepthVS;
@@ -137,8 +140,13 @@ float4 PSForward(in PSInput input) : SV_Target
 	shadingInput.ShadingCBuffer = PSCBuffer;
 	shadingInput.ShadowCBuffer = ShadowCBuffer;
 
+	Texture2D SpecularLUT = Tex2DTable[SRVIndices.SpecularCubemapLookupIdx];
+	TextureCube SpecularCubemap = TexCubeTable[SRVIndices.SpecularCubemapIdx];
+
 	Texture2DArray sunShadowMap = Tex2DArrayTable[SRVIndices.SunShadowMapIdx];
-	float3 shadingResult = ShadePixel(shadingInput, sunShadowMap, ShadowMapSampler);
+
+	float3 shadingResult = ShadePixel(shadingInput, SpecularCubemap, SpecularLUT, LinearSampler,
+		sunShadowMap, ShadowMapSampler);
 
 	//float nDotL = dot(sunDirectionWS, normalWS);
 	//return float4(nDotL, nDotL, nDotL, nDotL);

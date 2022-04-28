@@ -49,7 +49,7 @@ protected:
 	Model* currentModel = nullptr;
 	MeshRenderer meshRenderer;
 
-	Texture envSpecularLUT;
+	Texture specularLookupTexture;
 
 	RenderTexture mainTarget;
 	DepthBuffer depthBuffer;

@@ -177,7 +177,8 @@ void MyD3DProject::Initialize()
 			DXGI_FORMAT_R16G16B16A16_FLOAT, true, textureData.Texels.Data());*/
 	}
 
-	//GenerateEnvSpecularLookupTexture(envSpecularLUT);
+	LoadTexture(specularLookupTexture, L"Content\\Textures\\EnvSpecularLUT.dds", false);
+	//GenerateEnvSpecularLookupTexture(specularLookupTexture);
 }
 
 void MyD3DProject::Shutdown()
@@ -187,7 +188,7 @@ void MyD3DProject::Shutdown()
 	sceneModel.Shutdown();
 	meshRenderer.Shutdown();
 
-	envSpecularLUT.Shutdown();
+	specularLookupTexture.Shutdown();
 
 	for (uint64 i = 0; i < envMaps.Size(); ++i)	
 		envMaps[i].EnvMap.Shutdown();	
@@ -333,9 +334,15 @@ void MyD3DProject::RenderForward()
 
 	DX12::SetViewport(cmdList, mainTarget.Width(), mainTarget.Height());
 
+	Texture& specularCubMap = skyCache.CubeMap;
+	if ((uint32)AppSettings::SkyMode >= AppSettings::CubeMapStart)
+		specularCubMap = envMaps[(uint32)AppSettings::SkyMode - AppSettings::CubeMapStart].EnvMap;
+
 	// Render the main forward pass
 	MainPassData mainPassData;
 	mainPassData.SkyCache = &skyCache;
+	mainPassData.SpecularLUT = &specularLookupTexture;
+	mainPassData.SpecularCubMap = &specularCubMap;
 	mainPassData.EnvSH = envSH;
 	meshRenderer.RenderMainPass(cmdList, camera, mainPassData);
 

@@ -64,12 +64,34 @@ float3 CalcLighting(in float3 normal, in float3 lightDir, in float3 peekIrradian
 	return lighting * nDotL * peekIrradiance;
 }
 
+float3 CalcSpecularIBL(in float3 normal, in float3 viewWS, in float3 specularAlbedo, in float roughness,
+	in TextureCube specularCubemap, in Texture2D specularLUT, in SamplerState linearSampler)
+{
+	float2 cubMapSize;
+	uint numMips;
+	specularCubemap.GetDimensions(0, cubMapSize.x, cubMapSize.y, numMips);
+
+	float3 reflectWS = reflect(-viewWS, normal);
+
+	const float SqrtRoughness = sqrt(roughness);
+
+	// Compute the mip level, assuming the top level is a roughness of 0.01
+	float mipLevel = saturate(SqrtRoughness - 0.01f) * (numMips - 1.0f);
+	
+	float viewAngle = saturate(dot(viewWS, normal));
+
+	float3 prefilteredColor = specularCubemap.SampleLevel(linearSampler, reflectWS, mipLevel).xyz;
+	float2 envBRDF = specularLUT.SampleLevel(linearSampler, float2(viewAngle, SqrtRoughness), 0.0f).xy;
+	
+	return prefilteredColor * (specularAlbedo * envBRDF.x + envBRDF.y);
+}
+
 //-------------------------------------------------------------------------------------------------
 // Calculates the full shading result for a single pixel. Note: some of the input textures
 // are passed directly to this function instead of through the ShadingInput struct in order to
 // work around incorrect behavior from the shader compiler
 //-------------------------------------------------------------------------------------------------
-float3 ShadePixel(in ShadingInput input)
+float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Texture2D specularLUT, in SamplerState linearSampler)
 {
 	float3 vtxNormalWS = input.TangentFrame._m20_m21_m22;
 	float3 positionWS = input.PositionWS;
@@ -84,30 +106,35 @@ float3 ShadePixel(in ShadingInput input)
 	normalTS.z = sqrt(1.0f - saturate(normalTS.x * normalTS.x + normalTS.y * normalTS.y));
 	float3 normalWS = normalize(mul(normalTS, input.TangentFrame));
 
-	float4 albedoMap = input.AlbedoMap;
-	float metallic = saturate(input.MetallicMap);
-	float3 diffuseAlbedo = lerp(albedoMap.xyz, 0.0f, metallic);
-	float3 specularAlbedo = lerp(0.03f, albedoMap.xyz, metallic);
-
 	float roughness = input.RoughnessMap * input.RoughnessMap;
-
+	float metallic = saturate(input.MetallicMap);
 	//metallic = 0.8f;
 	//roughness = 0.1f;
+
+	float4 albedoMap = input.AlbedoMap;
+	float3 diffuseAlbedo = lerp(albedoMap.xyz, 0.0f, metallic);
+	float3 specularAlbedo = lerp(0.03f, albedoMap.xyz, metallic);
 
 	float depthVS = input.DepthVS;
 	float3 cameraPosWS = CBuffer.CameraPosWS;
 	float3 sunDirectionWS = CBuffer.SunDirectionWS;
 	float3 sunIrradiance = CBuffer.SunIrradiance;
-
-	// Add in the primary directional light
+	
 	float3 output = 0.0f;
 
+	// Add in the primary directional light
 	output += CalcLighting(normalWS, sunDirectionWS, sunIrradiance, diffuseAlbedo, specularAlbedo,
 		roughness, positionWS, cameraPosWS);
 
-	float3 ambient = EvalSH9Irradiance(normalWS, CBuffer.EnvSH) * InvPi;
-	ambient *= 0.1f; // Darken the ambient since we don't have any sky occlusion
-	output += ambient * diffuseAlbedo;
+	// Add in the ambient
+	{
+		const float occlusion = 0.1f; // Darken the ambient since we don't have any sky occlusion
+		float3 ambient = EvalSH9Irradiance(normalWS, CBuffer.EnvSH) * InvPi;
+		output += ambient * diffuseAlbedo * occlusion;
+		
+		output += CalcSpecularIBL(normalWS, viewWS, specularAlbedo, roughness, specularCubemap, 
+			specularLUT, linearSampler) * occlusion;
+	}
 
 	output = clamp(output, 0.0f, FP16Max);
 	return output;
