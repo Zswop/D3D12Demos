@@ -478,13 +478,14 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 	psConstants.SinSunAngularRadius = std::sin(DegToRad(mainPassData.SkyCache->SunSize));
 	psConstants.CameraPosWS = camera.Position();
 	psConstants.ShadowNormalBias = 0.01f;
+	psConstants.EnvSH = mainPassData.EnvSH;
 
+	psConstants.NumZTiles = uint32(mainPassData.NumZTiles);
 	psConstants.NumXTiles = uint32(mainPassData.NumXTiles);
 	psConstants.NumXYTiles = uint32(mainPassData.NumXTiles * mainPassData.NumYTiles);
+	psConstants.ClusterTileSize = uint32(mainPassData.ClusterTileSize);
 	psConstants.NearClip = camera.NearClip();
 	psConstants.FarClip = camera.FarClip();
-
-	psConstants.EnvSH = mainPassData.EnvSH;
 
 	psConstants.RTSize = mainPassData.RTSize;
 	psConstants.JitterOffset = mainPassData.JitterOffset;

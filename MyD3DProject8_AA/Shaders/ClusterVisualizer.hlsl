@@ -3,7 +3,8 @@
 //=================================================================================================
 #include "Constants.hlsl"
 #include "DescriptorTables.hlsl"
-#include "AppSettings.hlsl"
+
+static const uint SpotLightElementsPerCluster = 1;
 
 //=================================================================================================
 // Resources
@@ -11,14 +12,19 @@
 struct ClusterVisConstants
 {
 	row_major float4x4 Projection;
+
 	float3 ViewMin;
 	float NearClip;
+
 	float3 ViewMax;
 	float InvClipRange;
-	float2 DisplaySize;
-	uint NumXTiles;
+
+	uint NumZTiles;
+	uint NumXTiles;	
 	uint NumXYTiles;
-	
+	uint ClusterTileSize;
+		
+	float2 DisplaySize;
 	uint DecalClusterBufferIdx;
 	uint SpotLightClusterBufferIdx;
 };
@@ -40,14 +46,14 @@ float4 ClusterVisualizerPS(in float4 PositionSS : SV_Position, in float2 TexCoor
 
 	float2 screenPos = projectedPos.xy * CBuffer.DisplaySize;
 	float normalizedZPos = saturate((viewPos.z - CBuffer.NearClip) * CBuffer.InvClipRange);
-	uint3 tileCoords = uint3(uint2(screenPos) / ClusterTileSize, normalizedZPos * NumZTiles);
+	uint3 tileCoords = uint3(uint2(screenPos) / CBuffer.ClusterTileSize, normalizedZPos * CBuffer.NumZTiles);
 	uint clusterIdx = (tileCoords.z * CBuffer.NumXYTiles) + (tileCoords.y * CBuffer.NumXTiles) + tileCoords.x;
 
 	if (projectedPos.x < 0.0f || projectedPos.x > 1.0f || projectedPos.y < 0.0f || projectedPos.y > 1.0f)
 		return 0.0f;
 
 	float3 output = 0.05f;
-
+	
 	{
 		uint numLights = 0;
 		uint clusterOffset = clusterIdx * SpotLightElementsPerCluster;

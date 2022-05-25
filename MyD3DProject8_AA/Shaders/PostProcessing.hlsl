@@ -2,6 +2,8 @@
 #include "Constants.hlsl"
 #include "ACES.hlsl"
 
+#include "AppSettings.hlsl"
+
 //=================================================================================================
 // Constant buffers
 //=================================================================================================
@@ -18,7 +20,14 @@ struct SRVIndicesLayout
 	uint Idx7;
 };
 
+struct PPSettingsLayout
+{
+	float Exposure;
+	float BloomExposure;
+};
+
 ConstantBuffer<SRVIndicesLayout> SRVIndices : register(b0);
+ConstantBuffer<PPSettingsLayout> PPSettings : register(b1);
 
 //=================================================================================================
 // Samplers
@@ -181,10 +190,10 @@ float4 ToneMap(in PSInput input) : SV_Target0
 	float3 color = inputTexture0.Sample(PointSampler, input.TexCoord).xyz;
 
 	// Add bloom
-	color += inputTexture1.Sample(LinearSampler, input.TexCoord).xyz * exp2(-4.0);
+	color += inputTexture1.Sample(LinearSampler, input.TexCoord).xyz * exp2(PPSettings.BloomExposure);
 
 	// Apply exposure (accounting for the FP16 scale used for lighting and emissive sources)
-	color *= exp2(-14.0f) / FP16Scale;
+	color *= exp2(PPSettings.Exposure) / FP16Scale;
 
 	// Tone map to sRGB color space with the appropriate transfer function applied
 	//color = ToneMapFilmicALU(color);

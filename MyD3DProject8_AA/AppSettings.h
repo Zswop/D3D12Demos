@@ -81,13 +81,34 @@ namespace AppSettings
 	extern ResolveFilterTypes ResolveFilterType;
 	extern float FilterGaussianSigma;
 
+	extern float ExposureFilterOffset;
+	extern float Exposure;
+
 	extern bool32 EnableTemporalAA;
+	extern float TemporalAABlendFactor;
 	extern JitterModes JitterMode;
+
+	const extern uint32 CBufferRegister;
+	extern ConstantBuffer CBuffer;
 
 	void Initialize();
 	void Shutdown();
 	void Update(uint32 displayWidth, uint32 displayHeight);
 	void UpdateCBuffer();
+	
+	void BindCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
+	void BindCBufferCompute(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
+}
+
+namespace AppSettings
+{
+	struct PPSettings
+	{
+		float Exposure;
+		float BloomExposure;
+	};
+
+	void BindPPCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
 }
 
 namespace AppSettings

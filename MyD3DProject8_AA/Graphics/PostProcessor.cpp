@@ -3,8 +3,6 @@
 namespace Framework
 {
 
-static const int MaxBloomPyramidLevels = 16;
-
 void PostProcessor::Initialize()
 {
 	helper.Initialize();

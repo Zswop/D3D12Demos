@@ -16,7 +16,11 @@ struct ResolveConstants
 	
 	float FilterRadius;
 	float FilterGaussianSigma;
+	float Exposure;
+	float ExposureFilterOffset;
+
 	int EnableTemporalAA;
+	float TemporalAABlendFactor;
 };
 
 struct SRVIndexConstants
@@ -271,8 +275,9 @@ float3 Reproject(in Texture2D velocityBuffer, in Texture2D depthBuffer, in Textu
 		float3 sum = 0.0f;
 		float totalWeight = 0.0f;
 
-		const float ExposureFilterOffset = 2.0f;
-		const float Exposure = exp2(-14.0f + ExposureFilterOffset) / FP16Scale;
+		const float ExposureFilterOffset = CBuffer.ExposureFilterOffset;
+		const float Exposure = exp2(CBuffer.Exposure + ExposureFilterOffset) / FP16Scale;
+
 		const int ReprojectionFilter = FilterTypes_CatmullRom;
 
 		for (int ty = -1; ty <= 2; ++ty)
@@ -314,8 +319,8 @@ float4 ResolvePS(in float4 Position : SV_Position) : SV_Target0
 
 	uint2 pixelPos = uint2(Position.xy);
 
-	const float ExposureFilterOffset = 2.0f;
-	const float Exposure = exp2(-14.0f + ExposureFilterOffset) / FP16Scale;
+	const float ExposureFilterOffset = CBuffer.ExposureFilterOffset;
+	const float Exposure = exp2(CBuffer.Exposure + ExposureFilterOffset) / FP16Scale;
 
 	float3 sum = 0.0f;
 	float totalWeight = 0.0f;

@@ -22,14 +22,16 @@ struct MainPassData
 	const Texture* SpecularCubMap = nullptr;
 	SH9Color EnvSH;
 	
+	uint64 NumZTiles = 0;
 	uint64 NumXTiles = 0;
 	uint64 NumYTiles = 0;
-
-	const ConstantBuffer* SpotLightBuffer = nullptr;
-	const RawBuffer* SpotLightClusterBuffer = nullptr;
+	uint64 ClusterTileSize = 0;
 
 	Float2 RTSize;
 	Float2 JitterOffset;
+
+	const ConstantBuffer* SpotLightBuffer = nullptr;
+	const RawBuffer* SpotLightClusterBuffer = nullptr;
 };
 
 struct ShadingConstants
@@ -41,15 +43,20 @@ struct ShadingConstants
 	Float4Align Float3 CameraPosWS;
 	float ShadowNormalBias = 0.01f;
 
+	uint32 NumZTiles = 0;
 	uint32 NumXTiles = 0;
 	uint32 NumXYTiles = 0;
+	uint32 ClusterTileSize = 0;
+
 	float NearClip = 0.0f;
 	float FarClip = 0.0f;
-
-	Float4Align ShaderSH9Color EnvSH;
+	float Padding0 = 0.0;
+	float Padding1 = 0.0;
 
 	Float2 RTSize;
 	Float2 JitterOffset;
+
+	Float4Align ShaderSH9Color EnvSH;
 };
 
 struct MaterialTextureIndices

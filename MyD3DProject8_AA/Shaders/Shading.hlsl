@@ -5,7 +5,8 @@
 #include "SH.hlsl"
 
 #include "SharedTypes.hlsl"
-#include "AppSettings.hlsl"
+
+static const uint SpotLightElementsPerCluster = 1;
 
 struct ShadingInput
 {
@@ -108,9 +109,9 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 		uint2 pixelPos = input.PositionSS;
 		float zRange = CBuffer.FarClip - CBuffer.NearClip;
 		float normalizedZ = saturate((depthVS - CBuffer.NearClip) / zRange);
-		uint zTile = normalizedZ * NumZTiles;
-
-		uint3 tileCoords = uint3(pixelPos / ClusterTileSize, zTile);
+		uint zTile = normalizedZ * CBuffer.NumZTiles;
+		
+		uint3 tileCoords = uint3(pixelPos / CBuffer.ClusterTileSize, zTile);
 		uint clusterIdx = (tileCoords.z * CBuffer.NumXYTiles) + (tileCoords.y * CBuffer.NumXTiles) + tileCoords.x;
 		uint clusterOffset = clusterIdx * SpotLightElementsPerCluster;
 
@@ -146,6 +147,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 
 					const float3 shadowPosOffset = GetShadowPosOffset(saturate(dot(vtxNormalWS, surfaceToLight)), vtxNormalWS, shadowMapSize.x);
 
+					const float SpotShadowNearClip = 0.1f;
 					float spotLightVisibility = SpotLightShadowVisibility(positionWS, input.LightCBuffer.ShadowMatrices[spotLightIdx],
 						spotLightIdx,shadowPosOffset, spotLightShadowMap, shadowSampler, float2(SpotShadowNearClip, spotLight.Range));
 					spotLightVisibility = 1.0f;

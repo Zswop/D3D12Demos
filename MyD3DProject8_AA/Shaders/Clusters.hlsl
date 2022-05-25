@@ -2,7 +2,6 @@
 // Includes
 //=================================================================================================
 #include "Quaternion.hlsl"
-#include "AppSettings.hlsl"
 
 //=================================================================================================
 // Constant buffers
@@ -20,12 +19,17 @@ struct ClusterConstants
 {
 	row_major float4x4 ViewProjection;
 	row_major float4x4 InvProjection;
+
 	float NearClip;
 	float FarClip;
 	float InvClipRange;
+	float Projection33;
+
+	uint NumZTiles;
 	uint NumXTiles;
-	uint NumYTiles;
 	uint NumXYTiles;
+	uint ClusterTileSize;
+
 	uint ElementsPerCluster;
 	uint InstanceOffset;
 	uint NumLights;
@@ -97,8 +101,8 @@ void ClusterPS(in VSOutput input)
 	tileMinDepth = saturate((tileMinDepth - CBuffer.NearClip) * CBuffer.InvClipRange);
 	tileMaxDepth = saturate((tileMaxDepth - CBuffer.NearClip) * CBuffer.InvClipRange);
 
-	uint minZTile = uint(tileMinDepth * NumZTiles);
-	uint maxZTile = uint(tileMaxDepth * NumZTiles);
+	uint minZTile = uint(tileMinDepth * CBuffer.NumZTiles);
+	uint maxZTile = uint(tileMaxDepth * CBuffer.NumZTiles);
 
 #if Intersecting_
 	uint zTileStart = 0;

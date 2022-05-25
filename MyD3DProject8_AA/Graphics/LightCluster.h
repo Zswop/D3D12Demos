@@ -9,6 +9,10 @@
 namespace Framework
 {
 
+static const uint64 NumZTiles = 16;
+static const uint64 ClusterTileSize = 16;
+static const uint64 SpotLightElementsPerCluster = 1;
+
 class LightCluster
 {
 
@@ -16,8 +20,10 @@ public:
 
 	LightCluster();
 
-	void Initialize(const Model* sceneModel, int width, int height);
+	void Initialize(const Model* sceneModel);
 	void Shutdown();
+
+	void CreateClusterBuffer(uint32 width, uint32 height);
 
 	void CreatePSOs(DXGI_FORMAT rtFormat);
 	void DestroyPSOs();

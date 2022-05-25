@@ -30,7 +30,11 @@ struct ResolveConstants
 
 	float FilterRadius;
 	float FilterGaussianSigma;
+	float Exposure;
+	float ExposureFilterOffset;
+
 	bool32 EnableTemporalAA;
+	float TemporalAABlendFactor;
 };
 
 enum ResolveRootParams : uint32
@@ -52,10 +56,15 @@ void MyD3DProject::BeforeReset()
 
 void MyD3DProject::AfterReset()
 {
-	float aspect = float(swapChain.Width()) / swapChain.Height();
+	uint32 width = swapChain.Width();
+	uint32 height = swapChain.Height();
+
+	float aspect = float(width) / height;
 	camera.SetAspectRatio(aspect);
 
 	CreateRenderTargets();
+
+	lightCluster.CreateClusterBuffer(width, height);
 }
 
 void MyD3DProject::CreateRenderTargets()
@@ -284,7 +293,7 @@ void MyD3DProject::CreatePSOs()
 	ShadowHelper::CreatePSOs();
 	meshRenderer.CreatePSOs(mainTarget.Texture.Format, depthBuffer.DSVFormat, velocityBuffer.Texture.Format, mainTarget.MSAASamples);
 	skybox.CreatePSOs(mainTarget.Texture.Format, depthBuffer.DSVFormat, mainTarget.MSAASamples);
-	lightCluster.CreatePSOs(mainTarget.Texture.Format);
+	lightCluster.CreatePSOs(swapChain.Format());
 	
 	//if (msaaEnable)
 	{
@@ -344,7 +353,9 @@ void MyD3DProject::InitializeScene(Scenes currentScene)
 
 	currentModel = &sceneModels[currSceneIdx];
 	meshRenderer.Initialize(currentModel);
-	lightCluster.Initialize(currentModel, swapChain.Width(), swapChain.Height());
+
+	lightCluster.Initialize(currentModel);
+	lightCluster.CreateClusterBuffer(swapChain.Width(), swapChain.Height());
 
 	camera.SetPosition(AppSettings::SceneCameraPositions[currSceneIdx]);
 	camera.SetXRotation(AppSettings::SceneCameraRotations[currSceneIdx].x);
@@ -461,12 +472,12 @@ void MyD3DProject::Render(const Timer& timer)
 
 	meshRenderer.RenderSunShadowMap(cmdList, camera);
 
+	// Update the light constant buffer
 	{
 		meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
 
 		//spotLightBuffer.UpdateData(spotLights.Data(), spotLights.MemorySize(), 0);
 
-		// Update the light constant buffer
 		const Array<SpotLight>& spotLights = lightCluster.SpotLights();
 		const void* srcData[2] = { spotLights.Data(), meshRenderer.SpotLightShadowMatrices() };
 		uint64 sizes[2] = { spotLights.MemorySize(),  spotLights.Size() * sizeof(Float4x4) };
@@ -479,7 +490,7 @@ void MyD3DProject::Render(const Timer& timer)
 	RenderTexture& finalRT = RenderResolve();
 
 	postProcessor.Render(cmdList, finalRT, swapChain.BackBuffer());
-
+	
 	if (AppSettings::ShowClusterVisualizer)
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[1] = { swapChain.BackBuffer().RTV };
@@ -558,11 +569,16 @@ void MyD3DProject::RenderForward()
 	mainPassData.SpecularLUT = &specularLookupTexture;
 	mainPassData.SpecularCubMap = &specularCubMap;
 	mainPassData.EnvSH = envSH;
+	
+	mainPassData.NumXTiles = lightCluster.NumXTiles();
+	mainPassData.NumYTiles = lightCluster.NumYTiles();
+	mainPassData.ClusterTileSize = ClusterTileSize;
+	mainPassData.NumZTiles = NumZTiles;
+
 	mainPassData.RTSize.x = (float)mainTarget.Width();
 	mainPassData.RTSize.y = (float)mainTarget.Height();
 	mainPassData.JitterOffset = jitterOffset;
-	mainPassData.NumXTiles = lightCluster.NumXTiles();
-	mainPassData.NumYTiles = lightCluster.NumYTiles();
+
 	mainPassData.SpotLightBuffer = &spotLightBuffer;;
 	mainPassData.SpotLightClusterBuffer = &lightCluster.SpotLightClusterBuffer();
 	meshRenderer.RenderMainPass(cmdList, camera, mainPassData);
@@ -646,7 +662,12 @@ RenderTexture& MyD3DProject::RenderResolve()
 	resolveConstants.TextureSize = Float2(width, height);
 	resolveConstants.FilterRadius = AppSettings::ResolveFilterRadius;
 	resolveConstants.FilterGaussianSigma = AppSettings::FilterGaussianSigma;
+	
+	resolveConstants.Exposure = AppSettings::Exposure;
+	resolveConstants.ExposureFilterOffset = AppSettings::ExposureFilterOffset;
+
 	resolveConstants.EnableTemporalAA = AppSettings::EnableTemporalAA;
+	resolveConstants.TemporalAABlendFactor = AppSettings::TemporalAABlendFactor;
 	
 	DX12::BindTempConstantBuffer(cmdList, resolveConstants, ResolveParams_Constants, CmdListMode::Graphics);
 

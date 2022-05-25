@@ -4,10 +4,7 @@
 namespace Framework
 {
 
-static const uint64 NumZTiles = 16;
 static const uint64 NumConeSides = 16;
-static const uint64 ClusterTileSize = 16;
-static const uint64 SpotLightElementsPerCluster = 1;
 static const float SpotLightIntensityFactor = 25.0f;
 
 struct ClusterBounds
@@ -22,12 +19,17 @@ struct ClusterConstants
 {
 	Float4x4 ViewProjection;
 	Float4x4 InvProjection;
+
 	float NearClip = 0.0f;
 	float FarClip = 0.0f;
 	float InvClipRange = 0.0f;
+	float Projection33 = 0.0f;
+
+	uint32 NumZTiles = 0;
 	uint32 NumXTiles = 0;
-	uint32 NumYTiles = 0;
 	uint32 NumXYTiles = 0;
+	uint32 ClusterTileSize = 0;
+	
 	uint32 ElementsPerCluster = 0;
 	uint32 InstanceOffset = 0;
 	uint32 NumLights = 0;
@@ -50,13 +52,19 @@ enum ClusterRootParams : uint32
 struct ClusterVisConstants
 {
 	Float4x4 Projection;
+
 	Float3 ViewMin;
 	float NearClip = 0.0f;
+
 	Float3 ViewMax;
 	float InvClipRange = 0.0f;
+
+	uint32 NumZTiles;
+	uint32 NumXTiles;
+	uint32 NumXYTiles;
+	uint32 ClusterTileSize;
+	
 	Float2 DisplaySize;
-	uint32 NumXTiles = 0;
-	uint32 NumXYTiles = 0;
 
 	uint32 DecalClusterBufferIdx = uint32(-1);
 	uint32 SpotLightClusterBufferIdx = uint32(-1);
@@ -94,7 +102,7 @@ LightCluster::LightCluster()
 {
 };
 
-void LightCluster::Initialize(const Model* sceneModel, int width, int height)
+void LightCluster::Initialize(const Model* sceneModel)
 {
 	model = sceneModel;
 
@@ -128,20 +136,6 @@ void LightCluster::Initialize(const Model* sceneModel, int width, int height)
 		spotLightInstanceBuffer.Initialize(sbInit);
 	}
 
-	numXTiles = (width + (ClusterTileSize - 1)) / ClusterTileSize;
-	numYTiles = (height + (ClusterTileSize - 1)) / ClusterTileSize;
-	const uint64 numXYZTiles = numXTiles * numYTiles * NumZTiles;
-
-	{
-		// SpotLight cluster bitmask buffer
-		RawBufferInit rbInit;
-		rbInit.NumElements = numXYZTiles * SpotLightElementsPerCluster;
-		rbInit.CreateUAV = true;
-		rbInit.InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-		rbInit.Name = L"Spot Light Cluster Buffer";
-		spotLightClusterBuffer.Initialize(rbInit);
-	}
-
 	{
 		CompileOptions opts;
 		opts.Add("FrontFace_", 1);
@@ -170,8 +164,8 @@ void LightCluster::Initialize(const Model* sceneModel, int width, int height)
 	fullScreenTriVS = CompileFromFile(L"Shaders\\FullScreenTriangle.hlsl", "FullScreenTriangleVS", ShaderType::Vertex);
 	clusterVisPS = CompileFromFile(L"Shaders\\ClusterVisualizer.hlsl", "ClusterVisualizerPS", ShaderType::Pixel);
 
+	// Cluster root signature
 	{
-		// Cluster root signature
 		D3D12_ROOT_PARAMETER1 rootParameters[NumClusterRootParams] = { };
 		rootParameters[ClusterParams_StandardDescriptors].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 		rootParameters[ClusterParams_StandardDescriptors].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -206,8 +200,8 @@ void LightCluster::Initialize(const Model* sceneModel, int width, int height)
 		DX12::CreateRootSignature(&clusterRS, rootSignatureDesc);
 	}
 
+	// Cluster visualization root signature
 	{
-		// Cluster visualization root signature
 		D3D12_ROOT_PARAMETER1 rootParameters[NumClusterVisRootParams] = {};
 
 		// Standard SRV descriptors
@@ -249,10 +243,28 @@ void LightCluster::Shutdown()
 	DX12::Release(clusterVisRS);
 }
 
+void LightCluster::CreateClusterBuffer(uint32 width, uint32 height)
+{
+	numXTiles = (width + (ClusterTileSize - 1)) / ClusterTileSize;
+	numYTiles = (height + (ClusterTileSize - 1)) / ClusterTileSize;
+
+	// SpotLight cluster bitmask buffer
+	const uint64 NumElements = numXTiles * numYTiles * NumZTiles * SpotLightElementsPerCluster;
+	if (spotLightBoundsBuffer.NumElements != NumElements)
+	{
+		RawBufferInit rbInit;
+		rbInit.NumElements = NumElements;
+		rbInit.CreateUAV = true;
+		rbInit.InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+		rbInit.Name = L"Spot Light Cluster Buffer";
+		spotLightClusterBuffer.Initialize(rbInit);
+	}
+}
+
 void LightCluster::CreatePSOs(DXGI_FORMAT rtFormat)
 {
+	// Clustering PSO
 	{
-		// Clustering PSO
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = { };
 		psoDesc.pRootSignature = clusterRS;
 		psoDesc.BlendState = DX12::GetBlendState(BlendState::Disabled);
@@ -287,8 +299,8 @@ void LightCluster::CreatePSOs(DXGI_FORMAT rtFormat)
 		clusterIntersectingPSO->SetName(L"Cluster Intersecting PSO");
 	}
 
+	// Cluster visualizer PSO
 	{
-		// Cluster visualizer PSO
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.pRootSignature = clusterVisRS;
 		psoDesc.VS = fullScreenTriVS.ByteCode();
@@ -410,9 +422,11 @@ void LightCluster::RenderClusters(ID3D12GraphicsCommandList* cmdList, const Came
 		clusterConstants.NearClip = camera.NearClip();
 		clusterConstants.FarClip = camera.FarClip();
 		clusterConstants.InvClipRange = 1.0f / (camera.FarClip() - camera.NearClip());
+		clusterConstants.Projection33 = camera.FarClip() / (camera.FarClip() - camera.NearClip());
+		clusterConstants.NumZTiles = uint32(NumZTiles);
 		clusterConstants.NumXTiles = uint32(numXTiles);
-		clusterConstants.NumYTiles = uint32(numYTiles);
 		clusterConstants.NumXYTiles = uint32(numXTiles * numYTiles);
+		clusterConstants.ClusterTileSize = uint32(ClusterTileSize);
 		clusterConstants.InstanceOffset = 0;
 		clusterConstants.NumLights = Min<uint32>(uint32(spotLights.Size()), uint32(MaxSpotLights));
 		clusterConstants.NumDecals = 0;
@@ -497,13 +511,18 @@ void LightCluster::RenderClusterVisualizer(ID3D12GraphicsCommandList* cmdList, c
 
 	ClusterVisConstants clusterVisConstants;
 	clusterVisConstants.Projection = camera.ProjectionMatrix();
+
 	clusterVisConstants.ViewMin = Float3(farBottomLeft.x, farBottomLeft.y, camera.NearClip());
 	clusterVisConstants.NearClip = camera.NearClip();
 	clusterVisConstants.ViewMax = Float3(farTopRight.x, farTopRight.y, camera.FarClip());
 	clusterVisConstants.InvClipRange = 1.0f / (camera.FarClip() - camera.NearClip());
-	clusterVisConstants.DisplaySize = displaySize;
+	
+	clusterVisConstants.NumZTiles = uint32(NumZTiles);
 	clusterVisConstants.NumXTiles = uint32(numXTiles);
 	clusterVisConstants.NumXYTiles = uint32(numXTiles * numYTiles);
+	clusterVisConstants.ClusterTileSize = uint32(ClusterTileSize);
+
+	clusterVisConstants.DisplaySize = displaySize;
 	clusterVisConstants.DecalClusterBufferIdx = 0;
 	clusterVisConstants.SpotLightClusterBufferIdx = spotLightClusterBuffer.SRV;
 	DX12::BindTempConstantBuffer(cmdList, clusterVisConstants, ClusterVisParams_CBuffer, CmdListMode::Graphics);

@@ -1,5 +1,10 @@
 #include "PostProcessHelper.h"
 
+namespace AppSettings
+{
+	void BindPPCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
+}
+
 namespace Framework
 {
 
@@ -9,6 +14,7 @@ enum RootParams : uint32
 {
 	RootParam_StandardDescriptors,
 	RootParam_SRVIndices,
+	RootParam_PPSettings,
 
 	NumRootParams,
 };
@@ -41,6 +47,11 @@ void PostProcessHelper::Initialize()
 		rootParameters[RootParam_SRVIndices].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 		rootParameters[RootParam_SRVIndices].Descriptor.RegisterSpace = 0;
 		rootParameters[RootParam_SRVIndices].Descriptor.ShaderRegister = 0;
+
+		rootParameters[RootParam_PPSettings].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		rootParameters[RootParam_PPSettings].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		rootParameters[RootParam_PPSettings].Descriptor.RegisterSpace = 0;
+		rootParameters[RootParam_PPSettings].Descriptor.ShaderRegister = 1;
 
 		D3D12_STATIC_SAMPLER_DESC staticSamplers[4] = {};
 		staticSamplers[0] = DX12::GetStaticSamplerState(SamplerState::Point, 0);
@@ -248,6 +259,8 @@ void PostProcessHelper::PostProcess(CompiledShaderPtr pixelShader, const char* n
 		srvIndices[i] = DX12::NullTexture2DSRV;
 
 	DX12::BindTempConstantBuffer(cmdList, srvIndices, RootParam_SRVIndices, CmdListMode::Graphics);
+
+	AppSettings::BindPPCBufferGfx(cmdList, RootParam_PPSettings);
 
 	DX12::SetViewport(cmdList, outputs[0]->Texture.Width, outputs[0]->Texture.Height);
 

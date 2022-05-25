@@ -32,15 +32,20 @@ struct ShadingConstants
 	float3 CameraPosWS;
 	float ShadowNormalBias;
 
+	uint NumZTiles;
 	uint NumXTiles;
 	uint NumXYTiles;
+	uint ClusterTileSize;
+
 	float NearClip;
 	float FarClip;
-
-	SH9Color EnvSH;
+	float Padding0;
+	float Padding1;
 
 	float2 RTSize;
 	float2 JitterOffset;
+
+	SH9Color EnvSH;
 };
 
 struct LightConstants

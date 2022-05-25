@@ -92,7 +92,7 @@ struct Buffer
 
 	MapResult Map();
 	MapResult MapAndSetData(const void* data, uint64 dataSize);
-	template<typename T> MapResult MapAndSetData(const T& data) { return MapAndSetData(data, sizeof(T)); }
+	template<typename T> MapResult MapAndSetData(const T& data) { return MapAndSetData(&data, sizeof(T)); }
 	uint64 UpdateData(const void* srcData, uint64 srcSize, uint64 dstOffset);
 	uint64 MultiUpdateData(const void* srcData[], uint64 srcSize[], uint64 dstOffset[], uint64 numUpdates);
 
@@ -141,7 +141,7 @@ struct ConstantBuffer
 	void* Map();
 	template<typename T> T* Map() { return reinterpret_cast<T*>(Map()); }
 	void MapAndSetData(const void* data, uint64 dataSize);
-	template<typename T> void MapAndSetData(const T& data) { MapAndSetData(data, sizeof(T)); }
+	template<typename T> void MapAndSetData(const T& data) { MapAndSetData(&data, sizeof(T)); }
 	void UpdateData(const void* srcData, uint64 srcSize, uint64 dstOffset);
 	void MultiUpdateData(const void* srcData[], uint64 srcSize[], uint64 dstOffset[], uint64 numUpdates);
 };

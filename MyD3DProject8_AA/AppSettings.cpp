@@ -19,8 +19,15 @@ namespace AppSettings
 	ResolveFilterTypes ResolveFilterType;
 	float FilterGaussianSigma;
 
+	float ExposureFilterOffset;
+	float Exposure;
+
 	bool32 EnableTemporalAA;
+	float TemporalAABlendFactor;
 	JitterModes JitterMode;
+
+	const uint32 CBufferRegister = 12;
+	ConstantBuffer CBuffer;	
 
 	void AppSettings::Initialize()
 	{
@@ -34,13 +41,17 @@ namespace AppSettings
 		CurrentScene = Scenes::Sponza;
 		ShowClusterVisualizer = false;
 
-		MSAAMode = MSAAModes::MSAA4x;
+		MSAAMode = MSAAModes::MSAANone;
 
 		ResolveFilterRadius = 1.0f;
 		ResolveFilterType = ResolveFilterTypes::BSpline;
 		FilterGaussianSigma = 0.5f;
 
+		ExposureFilterOffset = 2.0f;
+		Exposure = -14.0f;
+
 		EnableTemporalAA = true;
+		TemporalAABlendFactor = 0.1f;
 		JitterMode = JitterModes::Jitter2x;
 	}
 
@@ -54,5 +65,21 @@ namespace AppSettings
 
 	void AppSettings::UpdateCBuffer()
 	{
+	}
+
+	void BindCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter)
+	{
+	}
+
+	void BindCBufferCompute(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter)
+	{
+	}
+
+	void BindPPCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter)
+	{
+		PPSettings ppSettings;
+		ppSettings.Exposure = Exposure;
+		ppSettings.BloomExposure = -4.0f;
+		DX12::BindTempConstantBuffer(cmdList, ppSettings, rootParameter, CmdListMode::Graphics);
 	}
 }
