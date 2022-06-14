@@ -218,6 +218,10 @@ void MeshRenderer::Initialize(const Model* model_)
 			matIndices.Roughness = material.Textures[uint64(MaterialTextures::Roughness)]->SRV;
 			matIndices.Metallic = material.Textures[uint64(MaterialTextures::Metallic)]->SRV;
 			matIndices.Emissive = material.Textures[uint64(MaterialTextures::Emissive)]->SRV;
+
+			// Opacity is optional
+			const Texture* opacity = material.Textures[uint64(MaterialTextures::Opacity)];
+			matIndices.Opacity = opacity ? opacity->SRV : uint32(-1);
 		}
 		
 		StructuredBufferInit sbInit;
