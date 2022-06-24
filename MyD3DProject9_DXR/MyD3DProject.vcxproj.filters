@@ -141,10 +141,19 @@
     <ClInclude Include="Graphics\DXRPathTracer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\DXRPathTracer.cpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\DXRHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imconfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_internal.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -243,6 +252,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\DXRHelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DXRPathTracer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiHelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_demo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_draw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

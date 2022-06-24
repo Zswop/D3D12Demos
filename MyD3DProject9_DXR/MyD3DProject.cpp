@@ -66,7 +66,7 @@ void MyD3DProject::AfterReset()
 	CreateRenderTargets();
 
 	lightCluster.CreateClusterBuffer(width, height);
-	//pathTracer.CreateRenderTarget(width, height);
+	pathTracer.CreateRenderTarget(width, height);
 }
 
 void MyD3DProject::CreateRenderTargets()
@@ -211,7 +211,7 @@ void MyD3DProject::Initialize()
 	}
 
 	// Resolve root signature
-	{		
+	{
 		D3D12_ROOT_PARAMETER1 rootParameters[NumResolveRootParams] = {};
 
 		// Standard SRV descriptors
@@ -727,14 +727,8 @@ void MyD3DProject::RenderResolve()
 	DX12::TransitionResource(cmdList, prevFrameTarget.Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
-int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow){
-	//FILE* fp;
-
-	//AllocConsole();
-	//freopen_s(&fp, "CONIN$", "r", stdin);
-	//freopen_s(&fp, "CONOUT$", "w", stdout);
-	//freopen_s(&fp, "CONOUT$", "w", stderr);
-
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
+{
 	MyD3DProject app(lpCmdLine);
 	app.Run();
 	return 0;

@@ -4,6 +4,7 @@
 #include "Exceptions.h"
 #include "Graphics\\ShaderCompilation.h"
 #include "Graphics\\Spectrum.h"
+#include "ImGuiHelper.h"
 
 // AppSettings framework
 namespace AppSettings
@@ -138,6 +139,9 @@ void App::Initialize_Internal()
 
 	window.RegisterMessageCallback(OnWindowResized, this);
 
+	// Initialize ImGui
+	ImGuiHelper::Initialize(window);
+
 	AppSettings::Initialize();
 
 	Initialize();
@@ -146,10 +150,13 @@ void App::Initialize_Internal()
 void App::Shutdown_Internal()
 {
 	DX12::FlushGPU();	
-	DestroyPSOs_Internal();
+	DestroyPSOs();
+	ImGuiHelper::Shutdown();
+	ShutdownShaders();
 	swapChain.Shutdown();
 
 	AppSettings::Shutdown();
+
 	Shutdown();
 
 	DX12::Shutdown();
@@ -158,8 +165,10 @@ void App::Shutdown_Internal()
 void App::Update_Internal()
 {
 	appTimer.Update();
+
 	const uint32 displayWidth = swapChain.Width();
 	const uint32 displayHeight = swapChain.Height();
+	ImGuiHelper::BeginFrame(displayWidth, displayHeight, appTimer.DeltaSecondsF());
 
 	CalculateFPS();
 
@@ -183,6 +192,13 @@ void App::Render_Internal()
 
 	Render(appTimer);
 
+	const uint32 displayWidth = swapChain.Width();
+	const uint32 displayHeight = swapChain.Height();
+
+	DrawLog();
+
+	ImGuiHelper::EndFrame(DX12::CmdList, swapChain.BackBuffer().RTV, displayWidth, displayHeight);
+
 	swapChain.EndFrame();
 
 	DX12::EndFrame(swapChain.D3DSwapChain(), swapChain.NumVSYNCIntervals());
@@ -203,11 +219,15 @@ void App::AfterReset_Internal()
 
 void App::CreatePSOs_Internal()
 {
+	ImGuiHelper::CreatePSOs(swapChain.Format());
+
 	CreatePSOs();
 }
 
 void App::DestroyPSOs_Internal()
 {
+	ImGuiHelper::DestroyPSOs();
+
 	DestroyPSOs();
 }
 
@@ -226,6 +246,65 @@ void App::ToggleFullScreen(bool fullScreen)
 
 		CreatePSOs_Internal();
 	}
+}
+
+void App::DrawLog()
+{
+	const uint32 displayWidth = swapChain.Width();
+	const uint32 displayHeight = swapChain.Height();
+
+	if (showLog == false)
+	{
+		ImGui::SetNextWindowSize(ImVec2(75.0f, 25.0f));
+		ImGui::SetNextWindowPos(ImVec2(25.0f, displayHeight - 50.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar;
+		if (ImGui::Begin("log_button", nullptr, ImVec2(75.0f, 25.0f), 0.0f, flags))
+		{
+			if (ImGui::Button("Log"))
+				showLog = true;
+		}
+
+		ImGui::PopStyleVar();
+
+		ImGui::End();
+
+		return;
+	}
+
+	ImVec2 initialSize = ImVec2(displayWidth * 0.5f, float(displayHeight) * 0.25f);
+	ImGui::SetNextWindowSize(initialSize, ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(10.0f, displayHeight - initialSize.y - 10.0f), ImGuiSetCond_FirstUseEver);
+
+	if (ImGui::Begin("Log", &showLog) == false)
+	{
+		ImGui::End();
+		return;
+	}
+
+	const uint64 numMessages = numLogMessages;
+	const uint64 start = numMessages > MaxLogMessages ? numMessages - MaxLogMessages : 0;
+	for (uint64 i = start; i < numMessages; ++i)
+		ImGui::TextUnformatted(logMessages[i % MaxLogMessages].c_str());
+
+	if (newLogMessage)
+		ImGui::SetScrollHere();
+
+	ImGui::End();
+
+	newLogMessage = false;
+}
+
+void App::AddToLog(const char* msg)
+{
+	if (msg == nullptr)
+		return;
+
+	const uint64 idx = uint64(InterlockedIncrement64(&numLogMessages) - 1) % MaxLogMessages;
+	logMessages[idx] = msg;
+
+	newLogMessage = true;
 }
 
 }

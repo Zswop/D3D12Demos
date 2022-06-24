@@ -51,6 +51,12 @@ protected:
 	D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 	uint32 adapterIdx = 0;
 
+	static const uint64 MaxLogMessages = 1024;
+	std::string logMessages[MaxLogMessages];
+	volatile int64 numLogMessages = 0;
+	bool showLog = false;
+	bool newLogMessage = false;
+
 private:
 	void ParseCommandLine(const wchar* cmdLine);
 
@@ -66,8 +72,15 @@ private:
 	void CreatePSOs_Internal();
 	void DestroyPSOs_Internal();
 
+	void DrawLog();
+
 public:
 	Window& Window() { return window; }
 	SwapChain& SwapChain() { return swapChain; }
+
+	void AddToLog(const char* msg);
 };
+
+extern App* GlobalApp;
+
 }
