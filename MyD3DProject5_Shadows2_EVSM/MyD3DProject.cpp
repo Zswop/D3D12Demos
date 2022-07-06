@@ -130,7 +130,7 @@ void MyD3DProject::CreateRenderTargets()
 		dbInit.InitialState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_DEPTH_READ;
 		dbInit.Name = L"Main Depth Buffer";
 		depthBuffer.Initialize(dbInit);
-	}	
+	}
 }
 
 void MyD3DProject::Initialize()
@@ -278,7 +278,7 @@ void MyD3DProject::Update(const Timer& timer)
 
 void MyD3DProject::Render(const Timer& timer)
 {
-	ID3D12GraphicsCommandList* cmdList = DX12::CmdList;
+	ID3D12GraphicsCommandList4* cmdList = DX12::CmdList;
 
 	meshRenderer.RenderSunShadowMap(cmdList, camera);
 

@@ -68,9 +68,6 @@ typedef uint32_t bool32;
 #include "Externals\\WinPixEventRuntime\\Include\\WinPixEventRuntime\\pix3.h"
 #pragma comment(lib, "Externals\\WinPixEventRuntime\\bin\\WinPixEventRuntime.lib")
 
-// D3DX12 utility library
-#include "d3dx12.h"
-
 // Un-define min and max from the windows headers
 #ifdef min
 	#undef min
@@ -98,9 +95,5 @@ typedef uint32_t bool32;
 #pragma comment(lib, "DXGI.lib")
 #pragma comment(lib, "D3D12.lib")
 
-#if EnableShaderModel6_
-	#include "Externals\\DXCompiler\\Include\\dxcapi.h"
-	#pragma comment(lib, "Externals\\DXCompiler\\Lib\\dxcompiler.lib")
-#else
-	#pragma comment(lib, "d3dcompiler.lib")
-#endif
+#include "Externals\\DXCompiler\\Include\\dxcapi.h"
+#pragma comment(lib, "Externals\\DXCompiler\\Lib\\dxcompiler.lib")

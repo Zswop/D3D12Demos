@@ -5,6 +5,7 @@
 #include "..\\Assert.h"
 #include "..\\InterfacePointers.h"
 #include "..\\MurmurHash.h"
+#include "..\\Containers.h"
 
 namespace Framework
 {
@@ -21,7 +22,7 @@ public:
 
 	void Add(const std::string& name, uint32 value);
 	void Reset();
-	
+
 	void MakeDefines(D3D_SHADER_MACRO defines[MaxDefines + 1]) const;
 
 private:
@@ -41,6 +42,7 @@ enum class ShaderType
 	Geometry,
 	Pixel,
 	Compute,
+	Library,
 
 	NumTypes
 };
@@ -60,20 +62,18 @@ public:
 	std::wstring FilePath;
 	std::string FunctionName;
 	CompileOptions CompileOpts;
-	bool ForceOptimization;
-	ID3DBlobPtr ByteCode;
+	Array<uint8> ByteCode;
 	ShaderType Type;
 	Hash ByteCodeHash;
 
 	CompiledShader(const wchar* filePath, const char* functionName,
-		const CompileOptions& compileOptions,
-		bool forceOptimization, ShaderType type)
+		const CompileOptions& compileOptions, ShaderType type)
 		: FilePath(filePath),
-		FunctionName(functionName),
 		CompileOpts(compileOptions),
-		ForceOptimization(forceOptimization),
 		Type(type)
 	{
+		if (functionName != nullptr)
+			FunctionName = functionName;
 	}
 };
 
@@ -110,8 +110,8 @@ public:
 	{
 		Assert_(ptr != nullptr);
 		D3D12_SHADER_BYTECODE byteCode;
-		byteCode.pShaderBytecode = ptr->ByteCode->GetBufferPointer();
-		byteCode.BytecodeLength = ptr->ByteCode->GetBufferSize();
+		byteCode.pShaderBytecode = ptr->ByteCode.Data();
+		byteCode.BytecodeLength = ptr->ByteCode.Size();
 		return byteCode;
 	}
 
@@ -126,44 +126,37 @@ typedef CompiledShaderPtr DomainShaderPtr;
 typedef CompiledShaderPtr GeometryShaderPtr;
 typedef CompiledShaderPtr PixelShaderPtr;
 typedef CompiledShaderPtr ComputeShaderPtr;
-typedef ComputeShaderPtr ShaderPtr;
+typedef CompiledShaderPtr ShaderPtr;
 
 // Compiles a shader from file and creates the appropriate shader instance
 CompiledShaderPtr CompileFromFile(const wchar* path,
 	const char* functionName,
 	ShaderType type,
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 VertexShaderPtr CompileVSFromFile(const wchar* path,
 	const char* functionName = "VS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 PixelShaderPtr CompilePSFromFile(const wchar* path,
 	const char* functionName = "PS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 GeometryShaderPtr CompileGSFromFile(const wchar* path,
 	const char* functionName = "GS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 HullShaderPtr CompileHSFromFile(const wchar* path,
 	const char* functionName = "HS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 DomainShaderPtr CompileDSFromFile(const wchar* path,
 	const char* functionName = "DS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 ComputeShaderPtr CompileCSFromFile(const wchar* path,
 	const char* functionName = "CS",
-	const CompileOptions& compileOpts = CompileOptions(),
-	bool forceOptimization = false);
+	const CompileOptions& compileOpts = CompileOptions());
 
 
 bool UpdateShaders();

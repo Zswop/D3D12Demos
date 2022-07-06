@@ -71,9 +71,9 @@ DXGI_FORMAT SMFormat(ShadowMapMode smMode)
 	Assert_(smMode != ShadowMapMode::NumValues);
 
 	if (smMode == ShadowMapMode::EVSM2)
-		return DXGI_FORMAT_R16G16_FLOAT;
+		return DXGI_FORMAT_R32G32_FLOAT;
 	else if (smMode == ShadowMapMode::EVSM4)
-		return DXGI_FORMAT_R16G16B16A16_FLOAT;
+		return DXGI_FORMAT_R32G32B32A32_FLOAT;
 	else if (smMode == ShadowMapMode::DepthMap)
 		return DXGI_FORMAT_R32_FLOAT;
 
@@ -313,8 +313,6 @@ void ConvertShadowMap(ID3D12GraphicsCommandList* cmdList, const DepthBuffer& dep
 			//smTarget.MakeReadable(cmdList, 0, arraySlice);
 		}
 	}
-
-	// TODO: Generate mipmaps
 }
 
 void PrepareCascades(const Float3& lightDir, uint64 shadowMapSize, bool stabilize, const Camera& camera,

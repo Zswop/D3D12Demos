@@ -60,7 +60,7 @@ namespace AppSettings
 
 namespace AppSettings
 {
-	const ShadowMapMode CurrentSMMode = ShadowMapMode::EVSM4;
+	const ShadowMapMode CurrentSMMode = ShadowMapMode::EVSM2;
 
 	inline bool UseEVSM(ShadowMapMode value)
 	{

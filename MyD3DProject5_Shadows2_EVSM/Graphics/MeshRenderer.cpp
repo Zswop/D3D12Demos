@@ -84,11 +84,15 @@ void MeshRenderer::CreateShadowMaps()
 		rtInit.Format = smFmt;
 		rtInit.MSAASamples = 1;
 		rtInit.ArraySize = NumCascades;
+		rtInit.CreateUAV = true;
+		rtInit.MipLevels = NumMipLevels(SunShadowMapSize, SunShadowMapSize);
 		rtInit.InitialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		rtInit.Name = L"Sun Fiterable Shadow Map";
 		sunFilterableShadowMap.Initialize(rtInit);
-
+		
 		rtInit.ArraySize = 1;
+		rtInit.MipLevels = 0;
+		rtInit.CreateUAV = false;
 		rtInit.InitialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		rtInit.Name = L"Temp Fiterable Shadow Map";
 		tempFilterableShadowMap.Initialize(rtInit);
@@ -399,14 +403,14 @@ void MeshRenderer::RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera&
 }
 
 // Renders all meshes using depth-only rendering for a sun shadow map
-void MeshRenderer::RenderSunShadowDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
+void MeshRenderer::RenderSunShadowDepth(ID3D12GraphicsCommandList2* cmdList, const Camera& camera)
 {
 	//TODO: Frastum Culling
 	RenderDepth(cmdList, camera, sunShadowPSO);
 }
 
 // Renders meshes using cascaded shadow mapping
-void MeshRenderer::RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
+void MeshRenderer::RenderSunShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera)
 {
 	if (AppSettings::UseFilterableShadows())
 		RenderSunFilterableShadowMap(cmdList, camera);
@@ -414,7 +418,7 @@ void MeshRenderer::RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const 
 		RenderSunDepthShadowMap(cmdList, camera);
 }
 
-void MeshRenderer::RenderSunDepthShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
+void MeshRenderer::RenderSunDepthShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera)
 {
 	PIXMarker marker(cmdList, L"Sun Shadow Map Rendering");
 
@@ -441,7 +445,7 @@ void MeshRenderer::RenderSunDepthShadowMap(ID3D12GraphicsCommandList* cmdList, c
 	sunShadowMap.MakeReadable(cmdList);
 }
 
-void MeshRenderer::RenderSunFilterableShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera)
+void MeshRenderer::RenderSunFilterableShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera)
 {
 	PIXMarker marker(cmdList, L"Sun Shadow Map Rendering");
 
@@ -472,7 +476,9 @@ void MeshRenderer::RenderSunFilterableShadowMap(ID3D12GraphicsCommandList* cmdLi
 		sunShadowMap.MakeWritable(cmdList);
 	}
 
-	sunFilterableShadowMap.MakeReadable(cmdList);
+	//sunFilterableShadowMap.MakeReadable(cmdList);
+
+	DX12::GenerateMips(cmdList, sunFilterableShadowMap);
 }
 
 }

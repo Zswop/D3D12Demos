@@ -70,15 +70,16 @@ ShadowSampler GetShadowSampler(SamplerComparisonState shadowMapSampler, SamplerS
 }
 
 //-------------------------------------------------------------------------------------------------
-// Samples the EVSM shadow map with implicit gradients
+// Samples the EVSM shadow map with gradients
 //-------------------------------------------------------------------------------------------------
-float SampleShadowMapEVSM(in float3 shadowPos, in uint arrayIdx, in Texture2DArray shadowMap, in SamplerState evsmSampler,
+float SampleShadowMapEVSM(in float3 shadowPos, in float3 shadowPosDX, in float3 shadowPosDY, in uint arrayIdx, in Texture2DArray shadowMap, in SamplerState evsmSampler,
 	in EVSMConstants evsmConstants, in float3 cascadeScale)
 {
 	float2 exponents = GetEVSMExponents(evsmConstants.PositiveExponent, evsmConstants.NegativeExponent, cascadeScale);
 	float2 warpedDepth = WarpDepth(shadowPos.z, exponents);
 
-	float4 occluder = shadowMap.SampleLevel(evsmSampler, float3(shadowPos.xy, arrayIdx), 0);
+	//float4 occluder = shadowMap.Sample(evsmSampler, float3(shadowPos.xy, arrayIdx));
+	float4 occluder = shadowMap.SampleGrad(evsmSampler, float3(shadowPos.xy, arrayIdx), shadowPosDX.xy, shadowPosDY.xy);
 
 	// Derivative of warping at depth
 	float2 depthScale = evsmConstants.Bias * exponents * warpedDepth;
@@ -262,15 +263,20 @@ float SunShadowVisibility(in float3 positionWS, in float depthVS, in float3 norm
 	float3 finalOffset = shadowPosOffset / abs(shadowConstants.Base.CascadeScales[cascadeIdx].z);
 	float3 shadowPos = mul(float4(positionWS + finalOffset, 1.0f), shadowConstants.Base.ShadowMatrix).xyz;
 
+	float3 shadowPosDX = ddx_fine(shadowPos);
+	float3 shadowPosDY = ddy_fine(shadowPos);
+
 	shadowPos += shadowConstants.Base.CascadeOffsets[cascadeIdx].xyz;
 	shadowPos *= shadowConstants.Base.CascadeScales[cascadeIdx].xyz;
-
 	shadowPos.xy += uvOffset;
 
-#if ShadowMapMode_ == ShadowMapMode_DepthMap_	
+	shadowPosDX *= shadowConstants.Base.CascadeScales[cascadeIdx].xyz;
+	shadowPosDY *= shadowConstants.Base.CascadeScales[cascadeIdx].xyz;
+	
+#if ShadowMapMode_ == ShadowMapMode_DepthMap_
 	return SampleShadowMapPCF(shadowPos, cascadeIdx, sunShadowMap, shadowSampler);
 #elif UseEVSM_
-	return SampleShadowMapEVSM(shadowPos, cascadeIdx, sunShadowMap, shadowSampler, shadowConstants.Extra,
-		shadowConstants.Base.CascadeScales[cascadeIdx].xyz);
+	return SampleShadowMapEVSM(shadowPos, shadowPosDX, shadowPosDY, cascadeIdx, sunShadowMap, shadowSampler, 
+		shadowConstants.Extra, shadowConstants.Base.CascadeScales[cascadeIdx].xyz);
 #endif
 }

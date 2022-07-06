@@ -28,18 +28,18 @@ struct Texture;
 namespace DX12
 {
 
-	void Initialize_Upload();
-	void Shutdown_Upload();
+void Initialize_Upload();
+void Shutdown_Upload();
 
-	void EndFrame_Upload();
+void EndFrame_Upload();
 
-	UploadContext ResourceUploadBegin(uint64 size);
-	void ResourceUploadEnd(UploadContext& context);
+UploadContext ResourceUploadBegin(uint64 size);
+void ResourceUploadEnd(UploadContext& context);
 
-	// Temporary CPU-writable buffer memory
-	MapResult AcquireTempBufferMem(uint64 size, uint64 alignment);
+// Temporary CPU-writable buffer memory
+MapResult AcquireTempBufferMem(uint64 size, uint64 alignment);
 
-	void ConvertAndReadbackTexture(const Texture& texture, DXGI_FORMAT outputFormat, ReadbackBuffer& buffer);
+void ConvertAndReadbackTexture(const Texture& texture, DXGI_FORMAT outputFormat, ReadbackBuffer& buffer);
 
 }
 }

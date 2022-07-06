@@ -319,6 +319,7 @@ struct RenderTextureInit
 	uint64 MSAASamples = 1;
 	uint64 ArraySize = 1;
 	bool32 CreateUAV = false;
+	uint64 MipLevels = 0;
 	D3D12_RESOURCE_STATES InitialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	const wchar* Name = nullptr;
 };
@@ -329,6 +330,7 @@ struct RenderTexture
 	D3D12_CPU_DESCRIPTOR_HANDLE RTV = { };
 	D3D12_CPU_DESCRIPTOR_HANDLE UAV = { };
 	Array<D3D12_CPU_DESCRIPTOR_HANDLE> ArrayRTVs;
+	Array<D3D12_CPU_DESCRIPTOR_HANDLE> ArrayUAVs;
 	uint32 MSAASamples = 1;
 	uint32 MSAAQuality = 0;
 
@@ -350,6 +352,10 @@ struct RenderTexture
 	DXGI_FORMAT Format() const { return Texture.Format; }
 	ID3D12Resource* Resource() const { return Texture.Resource; }
 	uint64 SubResourceIndex(uint64 mipLevel, uint64 arraySlice) const { return arraySlice * Texture.NumMips + mipLevel; }
+
+private:
+
+	RenderTexture(const RenderTexture& other) { }
 };
 
 struct DepthBufferInit

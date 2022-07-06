@@ -941,6 +941,7 @@ void RenderTexture::Initialize(const RenderTextureInit& init)
 	Assert_(init.Width > 0);
 	Assert_(init.Height > 0);
 	Assert_(init.MSAASamples > 0);
+	Assert_(init.MipLevels == 0 || init.MSAASamples == 1);
 
 	D3D12_RESOURCE_DESC textureDesc = { };
 	textureDesc.Format = init.Format;
@@ -950,6 +951,7 @@ void RenderTexture::Initialize(const RenderTextureInit& init)
 	if (init.CreateUAV)
 		textureDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	textureDesc.DepthOrArraySize = uint16(init.ArraySize);
+	textureDesc.MipLevels = uint32(init.MipLevels);
 	textureDesc.SampleDesc.Count = uint32(init.MSAASamples);
 	textureDesc.SampleDesc.Quality = init.MSAASamples > 1 ? DX12::StandardMSAAPattern : 0;
 	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -972,7 +974,7 @@ void RenderTexture::Initialize(const RenderTextureInit& init)
 	Texture.Width = uint32(init.Width);
 	Texture.Height = uint32(init.Height);
 	Texture.Depth = 1;
-	Texture.NumMips = 1;
+	Texture.NumMips = uint32(init.MipLevels);
 	Texture.ArraySize = uint32(init.ArraySize);
 	Texture.Format = init.Format;
 	Texture.Cubemap = false;
@@ -1010,6 +1012,27 @@ void RenderTexture::Initialize(const RenderTextureInit& init)
 	{
 		UAV = DX12::UAVDescriptorHeap.AllocatePersistent().Handles[0];
 		DX12::Device->CreateUnorderedAccessView(Texture.Resource, nullptr, nullptr, UAV);
+		
+		if (init.MipLevels > 0)
+		{
+			Assert_(init.ArraySize > 0);
+			ArrayUAVs.Init(init.MipLevels);
+
+			D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+			uavDesc.Format = init.Format;
+			uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+
+			for (uint64 i = 0; i < init.MipLevels; ++i)
+			{
+				uavDesc.Texture2DArray.ArraySize = uint32(init.ArraySize);
+				uavDesc.Texture2DArray.FirstArraySlice = 0;
+				uavDesc.Texture2DArray.MipSlice = uint32(i);
+				uavDesc.Texture2DArray.PlaneSlice = 0;
+
+				ArrayUAVs[i] = DX12::UAVDescriptorHeap.AllocatePersistent().Handles[0];
+				DX12::Device->CreateUnorderedAccessView(Texture.Resource, nullptr, &uavDesc, ArrayUAVs[i]);
+			}
+		}
 	}
 }
 
@@ -1019,7 +1042,10 @@ void RenderTexture::Shutdown()
 	DX12::UAVDescriptorHeap.FreePersistent(UAV);
 	for (uint64 i = 0; i < ArrayRTVs.Size(); ++i)
 		DX12::RTVDescriptorHeap.FreePersistent(ArrayRTVs[i]);
+	for (uint64 i = 0; i < ArrayUAVs.Size(); ++i)
+		DX12::UAVDescriptorHeap.FreePersistent(ArrayUAVs[i]);
 	ArrayRTVs.Shutdown();
+	ArrayUAVs.Shutdown();
 	Texture.Shutdown();
 }
 

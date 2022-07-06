@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="d3dx12.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PCH.h">
       <Filter>头文件</Filter>
     </ClInclude>

@@ -34,18 +34,31 @@ static D3D12_SAMPLER_DESC SamplerStateDescs[NumSamplerStates] = { };
 
 static D3D12_DESCRIPTOR_RANGE1 StandardDescriptorRangeDescs[NumStandardDescriptorRanges] = { };
 
-enum GenerateMipsRootParams : uint32
+enum SpdRootParams : uint32
 {
-	GenerateMipsParams_StandardDescriptors = 0,
-	GenerateMipsParams_UAV,
-	GenerateMipsParams_SRVIndex,
-
-	NumGenerateMipsRootParams
+	SpdParams_StandardDescriptors = 0,
+	SpdParams_CBuffer,
+	SpdParams_CounterUAV,
+	SpdParams_UAV6,
+	SpdParams_UAVs,
+	
+	NumSpdRootParams
 };
 
-static ID3D12RootSignature* generateMipsRS = nullptr;
-static ID3D12PipelineState* generateMipsPSO = nullptr;
-static CompiledShaderPtr generateMipsCS;
+struct SpdConstants
+{
+	int32 Mips;
+	int32 NumWorkGroupsPerSlice;
+};
+
+static ID3D12RootSignature* SpdRootSignature = nullptr;
+static ID3D12PipelineState* SpdPSO = nullptr;
+static CompiledShaderPtr SpdCS;
+
+static const uint64 MaxMipLevels = 12;
+static const uint64 SpdCounterNum = 6;
+static StructuredBuffer SpdCounterBuffer;
+
 
 void Initialize_Helpers()
 {
@@ -347,10 +360,101 @@ void Initialize_Helpers()
 			Device->CreateShaderResourceView(nullptr, &srvDesc, srvAlloc.Handles[i]);
 		NullTexture2DSRV = srvAlloc.Index;
 	}
+	
+	const std::wstring shaderPath = L"Shaders\\GenerateMipsCS.hlsl";
+	SpdCS = CompileFromFile(shaderPath.c_str(), "GenerateMipsCS", ShaderType::Compute);
+
+	// Spd root signature
+	{
+		D3D12_ROOT_PARAMETER1 rootParameters[NumSpdRootParams] = { };
+
+		// "Standard" descriptor table
+		rootParameters[SpdParams_StandardDescriptors].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParameters[SpdParams_StandardDescriptors].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		rootParameters[SpdParams_StandardDescriptors].DescriptorTable.pDescriptorRanges = DX12::StandardDescriptorRanges();
+		rootParameters[SpdParams_StandardDescriptors].DescriptorTable.NumDescriptorRanges = DX12::NumStandardDescriptorRanges;
+
+		rootParameters[SpdParams_CBuffer].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+		rootParameters[SpdParams_CBuffer].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		rootParameters[SpdParams_CBuffer].Descriptor.RegisterSpace = 0;
+		rootParameters[SpdParams_CBuffer].Descriptor.ShaderRegister = 0;
+		rootParameters[SpdParams_CBuffer].Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC;
+
+		{
+			D3D12_DESCRIPTOR_RANGE1 uavRanges[1] = {};
+			uavRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			uavRanges[0].NumDescriptors = 1;
+			uavRanges[0].BaseShaderRegister = 0;
+			uavRanges[0].RegisterSpace = 0;
+			uavRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			rootParameters[SpdParams_CounterUAV].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			rootParameters[SpdParams_CounterUAV].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+			rootParameters[SpdParams_CounterUAV].DescriptorTable.pDescriptorRanges = uavRanges;
+			rootParameters[SpdParams_CounterUAV].DescriptorTable.NumDescriptorRanges = ArraySize_(uavRanges);
+		}
+		
+		{
+			D3D12_DESCRIPTOR_RANGE1 uavRanges[1] = {};
+			uavRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			uavRanges[0].NumDescriptors = 1;
+			uavRanges[0].BaseShaderRegister = 1;
+			uavRanges[0].RegisterSpace = 0;
+			uavRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			rootParameters[SpdParams_UAV6].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			rootParameters[SpdParams_UAV6].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+			rootParameters[SpdParams_UAV6].DescriptorTable.pDescriptorRanges = uavRanges;
+			rootParameters[SpdParams_UAV6].DescriptorTable.NumDescriptorRanges = ArraySize_(uavRanges);
+		}
+
+		{
+			D3D12_DESCRIPTOR_RANGE1 uavRanges[1] = {};
+			uavRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+			uavRanges[0].NumDescriptors = 13;
+			uavRanges[0].BaseShaderRegister = 2;
+			uavRanges[0].RegisterSpace = 0;
+			uavRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			rootParameters[SpdParams_UAVs].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+			rootParameters[SpdParams_UAVs].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+			rootParameters[SpdParams_UAVs].DescriptorTable.pDescriptorRanges = uavRanges;
+			rootParameters[SpdParams_UAVs].DescriptorTable.NumDescriptorRanges = ArraySize_(uavRanges);
+		}
+
+		D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
+		rootSignatureDesc.NumParameters = ArraySize_(rootParameters);
+		rootSignatureDesc.pParameters = rootParameters;
+		rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+		DX12::CreateRootSignature(&SpdRootSignature, rootSignatureDesc);
+	}
+		
+	{
+		D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = { };
+		psoDesc.CS = SpdCS.ByteCode();
+		psoDesc.pRootSignature = SpdRootSignature;
+		psoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+		Device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&SpdPSO));
+	}
+
+	// Spd global count buffer
+	{
+		StructuredBufferInit sbInit;
+		sbInit.Stride = sizeof(uint32) * SpdCounterNum;
+		sbInit.CreateUAV = true;
+		sbInit.NumElements = 1;
+		sbInit.InitialState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+		SpdCounterBuffer.Initialize(sbInit);
+	}
 }
 
 void Shutdown_Helpers()
 {
+	SpdCounterBuffer.Shutdown();
+	Release(SpdRootSignature);
+	Release(SpdPSO);
+
 	SRVDescriptorHeap.FreePersistent(NullTexture2DSRV);
 
 	RTVDescriptorHeap.Shutdown();
@@ -703,6 +807,62 @@ void BindStandardDescriptorTable(ID3D12GraphicsCommandList* cmdList, uint32 root
 		cmdList->SetGraphicsRootDescriptorTable(rootParameter, handle);
 	else
 		cmdList->SetComputeRootDescriptorTable(rootParameter, handle);
+}
+
+void GenerateMips(ID3D12GraphicsCommandList2* cmdList, RenderTexture& rtTexture)
+{
+	PIXMarker marker(cmdList, L"Generate Mips");
+
+	Assert_(rtTexture.Texture.NumMips > 0);
+	Assert_(rtTexture.Texture.ArraySize <= SpdCounterNum);
+	Assert_(rtTexture.Texture.Width > 0 && rtTexture.Texture.Height > 0);
+	
+	const uint64 groupSize = 64;
+	uint32 dispatchX = DispatchSize(rtTexture.Texture.Width, groupSize);
+	uint32 dispatchY = DispatchSize(rtTexture.Texture.Height, groupSize);
+	uint32 dispatchZ = rtTexture.Texture.ArraySize;
+	uint32 numWorkGroups = dispatchX * dispatchY;
+	uint32 mipLevel = rtTexture.Texture.NumMips;
+
+	cmdList->SetComputeRootSignature(SpdRootSignature);
+	cmdList->SetPipelineState(SpdPSO);
+
+	BindStandardDescriptorTable(cmdList, SpdParams_StandardDescriptors, CmdListMode::Compute);
+
+	SpdConstants spdConstants;
+	spdConstants.Mips = mipLevel;
+	spdConstants.NumWorkGroupsPerSlice = numWorkGroups;
+	BindTempConstantBuffer(cmdList, spdConstants, SpdParams_CBuffer, CmdListMode::Compute);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE uavs[] = { SpdCounterBuffer.UAV };
+	BindTempDescriptorTable(cmdList, uavs, ArraySize_(uavs), SpdParams_CounterUAV, CmdListMode::Compute);
+
+	Array<D3D12_CPU_DESCRIPTOR_HANDLE> arrayUVAs(13, rtTexture.ArrayUAVs[0]);
+	memcpy(arrayUVAs.Data(), rtTexture.ArrayUAVs.Data(), rtTexture.ArrayUAVs.Size() * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+
+	D3D12_CPU_DESCRIPTOR_HANDLE uav6[] = { arrayUVAs[6] };
+	BindTempDescriptorTable(cmdList, uav6, ArraySize_(uav6), SpdParams_UAV6, CmdListMode::Compute);
+
+	BindTempDescriptorTable(cmdList, arrayUVAs.Data(), arrayUVAs.Size(), SpdParams_UAVs, CmdListMode::Compute);
+	
+	{
+		SpdCounterBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
+
+		D3D12_WRITEBUFFERIMMEDIATE_PARAMETER pParams[SpdCounterNum];
+		for (uint32 i = 0; i < dispatchZ; i++)
+		{
+			pParams[i] = { SpdCounterBuffer.GPUAddress + sizeof(uint32_t) * i, 0 };
+		}
+		cmdList->WriteBufferImmediate(dispatchZ, pParams, NULL);
+
+		SpdCounterBuffer.Transition(cmdList, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	}
+	
+	rtTexture.Transition(cmdList, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	cmdList->Dispatch(dispatchX, dispatchY, dispatchZ);
+
+	rtTexture.Transition(cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 }
 
 } // namespace DX12

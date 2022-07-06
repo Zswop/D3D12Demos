@@ -11,8 +11,8 @@ namespace DX12
 const uint64 RenderLatency = 2;
 
 // Externals
-extern ID3D12Device2* Device;
-extern ID3D12GraphicsCommandList1* CmdList;
+extern ID3D12Device5* Device;
+extern ID3D12GraphicsCommandList4* CmdList;
 extern ID3D12CommandQueue* GfxQueue;
 extern D3D_FEATURE_LEVEL FeatureLeavel;
 extern IDXGIFactory4* Factory;

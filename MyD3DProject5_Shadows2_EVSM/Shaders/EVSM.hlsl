@@ -1,6 +1,6 @@
 float2 GetEVSMExponents(in float positiveExponent, in float negativeExponent, in float3 cascadeScale)
 {
-	const float maxExponent = 5.54f;  // 5.54f : 42.0f
+	const float maxExponent = 42.0f;  // 5.54f : 42.0f
 
 	float2 lightSpaceExponents = float2(positiveExponent, negativeExponent);
 
@@ -14,7 +14,7 @@ float2 GetEVSMExponents(in float positiveExponent, in float negativeExponent, in
 // Input depth should be in [0, 1]
 float2 WarpDepth(float depth, float2 exponents)
 {
-	// return float2(depth, depth);
+	//return float2(depth, depth);
 	// Rescale depth in [-1, 1]
 	depth = 2.0f * depth - 1.0f;
 	float pos =  exp( exponents.x * depth);

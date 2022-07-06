@@ -165,8 +165,7 @@ void InsertStandardDescriptorRanges(D3D12_DESCRIPTOR_RANGE1* ranges);
 void BindAsDescriptorTable(ID3D12GraphicsCommandList* cmdList, uint32 descriptorIdx, uint32 rootParameter, CmdListMode cmdListMode);
 void BindStandardDescriptorTable(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter, CmdListMode cmdListMode);
 
-
-void GenerateMips(ID3D12GraphicsCommandList* cmdList, const RenderTexture& texture);
+void GenerateMips(ID3D12GraphicsCommandList2* cmdList, RenderTexture& rtTexture);
 
 }
 }

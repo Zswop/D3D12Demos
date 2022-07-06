@@ -6,13 +6,13 @@
 #include "..\\Utility.h"
 
 #if _DEBUG
-	#define UseDebugDevice_ 1
-	#define BreakOnDXError_ (UseDebugDevice_ && 1)
-	#define UseGPUValidation_ 0
+#define UseDebugDevice_ 1
+#define BreakOnDXError_ (UseDebugDevice_ && 1)
+#define UseGPUValidation_ 0
 #else
-	#define UseDebugDevice_ 0
-	#define BreakOnDXError_ 0
-	#define UseGPUValidation_ 0
+#define UseDebugDevice_ 0
+#define BreakOnDXError_ 0
+#define UseGPUValidation_ 0
 #endif
 
 namespace Framework
@@ -21,8 +21,8 @@ namespace Framework
 namespace DX12
 {
 
-ID3D12Device2* Device = nullptr;
-ID3D12GraphicsCommandList1* CmdList = nullptr;
+ID3D12Device5* Device = nullptr;
+ID3D12GraphicsCommandList4* CmdList = nullptr;
 ID3D12CommandQueue* GfxQueue = nullptr;
 D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_11_0;
 IDXGIFactory4* Factory = nullptr;
@@ -93,22 +93,17 @@ void Initialize(D3D_FEATURE_LEVEL minFeatureLevel, uint32 adapterIdx)
 	Adapter->GetDesc1(&desc);
 	WriteLog(L"Creating DX12 device on adapter '%ls'", desc.Description);
 
-	#if UseDebugDevice_
-		ID3D12DebugPtr d3d12debug;
-		DXCall(D3D12GetDebugInterface(IID_PPV_ARGS(&d3d12debug)));
-		d3d12debug->EnableDebugLayer();
+#if UseDebugDevice_
+	ID3D12DebugPtr d3d12debug;
+	DXCall(D3D12GetDebugInterface(IID_PPV_ARGS(&d3d12debug)));
+	d3d12debug->EnableDebugLayer();
 
-		#if UseGPUValidation_
-			ID3D12Debug1Ptr debug1;
-			d3d12debug->QueryInterface(IID_PPV_ARGS(&debug1));
-			debug1->SetEnableGPUBasedValidation(true);
-		#endif
-	#endif
-
-	#if EnableShaderModel6_ && 0
-		// Enable experimental shader models
-		DXCall(D3D12EnableExperimentalFeatures(1, &D3D12ExperimentalShaderModels, nullptr, nullptr));
-	#endif
+#if UseGPUValidation_
+	ID3D12Debug1Ptr debug1;
+	d3d12debug->QueryInterface(IID_PPV_ARGS(&debug1));
+	debug1->SetEnableGPUBasedValidation(true);
+#endif
+#endif
 
 	DXCall(D3D12CreateDevice(Adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&Device)));
 
@@ -131,29 +126,38 @@ void Initialize(D3D_FEATURE_LEVEL minFeatureLevel, uint32 adapterIdx)
 		throw Exception(L"The device doesn't support the minimum feature level required to run this sample (DX" + majorLevel + L"." + minorLevel + L")");
 	}
 
-	#if UseDebugDevice_
-		ID3D12InfoQueuePtr infoQueue;
-		DXCall(Device->QueryInterface(IID_PPV_ARGS(&infoQueue)));
+	// Check the required shader model
+	D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = { D3D_SHADER_MODEL_6_6 };
+	DXCall(Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+	if (shaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_1)
+		throw Exception(L"The device does not support the minimum shader model required to run this sample (SM 6.1)");
 
-		D3D12_MESSAGE_ID disabledMessages[] =
-		{
-			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+#if EnableDXR_
+	D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = { };
+	DXCall(Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5, sizeof(opts5)));
+	if (opts5.RaytracingTier < D3D12_RAYTRACING_TIER_1_1)
+		throw Exception(L"The device does not support DXR 1.1, which is required to run this sample.");
+#endif
 
-			// These happen when capturing with VS diagnostics
-			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
-		};
+#if UseDebugDevice_
+	ID3D12InfoQueuePtr infoQueue;
+	DXCall(Device->QueryInterface(IID_PPV_ARGS(&infoQueue)));
 
-		D3D12_INFO_QUEUE_FILTER filter = { };
-		filter.DenyList.NumIDs = ArraySize_(disabledMessages);
-		filter.DenyList.pIDList = disabledMessages;
-		infoQueue->AddStorageFilterEntries(&filter);
-	#endif
+	D3D12_MESSAGE_ID disabledMessages[] =
+	{
+		D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+	};
 
-	#if BreakOnDXError_
-		//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-		infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-	#endif
+	D3D12_INFO_QUEUE_FILTER filter = { };
+	filter.DenyList.NumIDs = ArraySize_(disabledMessages);
+	filter.DenyList.pIDList = disabledMessages;
+	infoQueue->AddStorageFilterEntries(&filter);
+#endif
+
+#if BreakOnDXError_
+	//infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+	infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+#endif
 
 	for (uint64 i = 0; i < NumCmdAllocators; ++i)
 		DXCall(Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&CmdAllocators[i])));
@@ -198,7 +202,7 @@ void Shutdown()
 	Release(GfxQueue);
 	Release(Factory);
 	Release(Adapter);
-	
+
 	Shutdown_Helpers();
 	Shutdown_Upload();
 

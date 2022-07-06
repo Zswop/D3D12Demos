@@ -1,4 +1,4 @@
-#include <DescriptorTables.hlsl>
+#include "DescriptorTables.hlsl"
 
 //=================================================================================================
 // Resources

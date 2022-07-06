@@ -24,7 +24,6 @@
     <ClInclude Include="AppSettings.h" />
     <ClInclude Include="Assert.h" />
     <ClInclude Include="Containers.h" />
-    <ClInclude Include="d3dx12.h" />
     <ClInclude Include="F12_Math.h" />
     <ClInclude Include="Exceptions.h" />
     <ClInclude Include="FileIO.h" />
@@ -97,7 +96,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{74071fdd-e480-4948-80fc-387606f776b9}</ProjectGuid>
     <RootNamespace>MyD3DProject1</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
     <ProjectName>MyD3DProject</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -157,6 +156,19 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+    <CustomBuild>
+      <Command>copy %(FullPath) $(OutDir)%(Filename)%(Extension)</Command>
+    </CustomBuild>
+    <CustomBuild>
+      <Message>Copying external DLL</Message>
+    </CustomBuild>
+    <CustomBuild>
+      <Outputs>$(OutDir)%(Filename)%(Extension)</Outputs>
+    </CustomBuild>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -174,13 +186,35 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+    </PostBuildEvent>
+    <CustomBuild>
+      <Command>copy %(FullPath) $(OutDir)%(Filename)%(Extension)</Command>
+    </CustomBuild>
+    <CustomBuild>
+      <Message>Copying external DLL</Message>
+    </CustomBuild>
+    <CustomBuild>
+      <Outputs>$(OutDir)%(Filename)%(Extension)</Outputs>
+    </CustomBuild>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CustomBuild Include="Externals\WinPixEventRuntime\bin\WinPixEventRuntime.dll">
       <FileType>Document</FileType>
-      <Command>copy %(FullPath) $(OutDir)%(Filename)%(Extension)</Command>
-      <Message>Copying external DLL</Message>
-      <Outputs>$(OutDir)%(Filename)%(Extension)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="Externals\DXCompiler\Bin\dxcompiler.dll">
+      <FileType>Document</FileType>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="$(WindowsSdkDir)\bin\$(WindowsTargetPlatformVersion)\x64\dxil.dll">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" $(OutDir)%(Filename)%(Extension)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" $(OutDir)%(Filename)%(Extension)</Command>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

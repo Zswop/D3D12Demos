@@ -46,7 +46,7 @@ public:
 
 	void RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Camera& camera, const MainPassData& mainPassData);
 	
-	void RenderSunShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
+	void RenderSunShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera);
 
 	const DepthBuffer& SunShadowMap() const { return sunShadowMap; }
 	const RenderTexture& SunFilterableShadowMap() const { return sunFilterableShadowMap; }
@@ -54,10 +54,10 @@ public:
 protected:
 
 	void RenderDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera, ID3D12PipelineState* pso);
-	void RenderSunShadowDepth(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
+	void RenderSunShadowDepth(ID3D12GraphicsCommandList2* cmdList, const Camera& camera);
 
-	void RenderSunDepthShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
-	void RenderSunFilterableShadowMap(ID3D12GraphicsCommandList* cmdList, const Camera& camera);
+	void RenderSunDepthShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera);
+	void RenderSunFilterableShadowMap(ID3D12GraphicsCommandList2* cmdList, const Camera& camera);
 
 	void LoadShaders();
 	void CreateShadowMaps();

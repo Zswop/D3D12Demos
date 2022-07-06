@@ -59,7 +59,7 @@ ConstantBuffer<ConvertConstants> CBuffer : register(b0);
 SamplerState LinearSampler : register (s0);
 
 //=================================================================================================
-// ShadowMap Convert Pixel 
+// ShadowMap Convert Pixel
 //=================================================================================================
 float4 SMConvert(in float4 PositionSS : SV_Position) : SV_Target0
 {
@@ -107,15 +107,13 @@ float4 FilterSM(in float4 Position : SV_Position) : SV_Target0
 #if Vertical_
 	const float filterSize = CBuffer.FilterSizeV;
 	const float texelSize = rcp(CBuffer.ShadowMapSize.y);	
-	//Texture2D<float4> shadowMap = Tex2DTable[CBuffer.InputMapIdx];
+	Texture2D<float4> shadowMap = Tex2DTable[CBuffer.InputMapIdx];
 #else
 	const float filterSize = CBuffer.FilterSizeU;
 	const float texelSize = rcp(CBuffer.ShadowMapSize.x);
-	//Texture2DArray<float4> shadowMap = Tex2DArrayTable[CBuffer.InputMapIdx];
+	Texture2DArray<float4> shadowMap = Tex2DArrayTable[CBuffer.InputMapIdx];
 #endif
-
-	Texture2D<float4> shadowMap = Tex2DTable[CBuffer.InputMapIdx];
-
+	
 	uint2 pixelPos = uint2(Position.xy);
 
 	const float Radius = filterSize / 2.0f;
@@ -147,12 +145,12 @@ float4 FilterSM(in float4 Position : SV_Position) : SV_Target0
 
 #if Vertical_
 		const float2 sampleUV = uv + float2(0.0f, offset) * texelSize;
-		//float4 smSample = shadowMap.SampleLevel(LinearSampler, sampleUV, 0.0f);
+		float4 smSample = shadowMap.SampleLevel(LinearSampler, sampleUV, 0.0f);
 #else
 		const float2 sampleUV = uv + float2(offset, 0.0f) * texelSize;
-		//float4 smSample = shadowMap.SampleLevel(LinearSampler, float3(sampleUV, CBuffer.ArraySliceIdx), 0.0f);
+		float4 smSample = shadowMap.SampleLevel(LinearSampler, float3(sampleUV, CBuffer.ArraySliceIdx), 0.0f);
 #endif
-		float4 smSample = shadowMap.SampleLevel(LinearSampler, sampleUV, 0.0f);
+		//float4 smSample = shadowMap.SampleLevel(LinearSampler, sampleUV, 0.0f);
 
 		sum += smSample * sampleWeight;
 		weightSum += sampleWeight;
@@ -169,13 +167,12 @@ float4 FilterSM(in float4 Position : SV_Position) : SV_Target0
 #if Vertical_
 		float2 samplePos = pixelPos + float2(0.0f, i);
 		samplePos = clamp(samplePos, 0, TextureSize_ - 1.0f);
-		//float4 smSample = shadowMap[uint2(samplePos)];
+		float4 smSample = shadowMap[uint2(samplePos)];
 #else
 		float2 samplePos = pixelPos + float2(i, 0.0f);
 		samplePos = clamp(samplePos, 0, TextureSize_ - 1.0f);
-		//float4 smSample = shadowMap[uint3(samplePos, CBuffer.ArraySliceIdx)];
+		float4 smSample = shadowMap[uint3(samplePos, CBuffer.ArraySliceIdx)];
 #endif
-		float4 smSample = shadowMap[uint2(samplePos)];
 
 		sum += smSample * smWeight;
 		weightSum += smWeight;
