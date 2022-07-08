@@ -42,7 +42,7 @@ StructuredBuffer<MaterialTextureIndices> MaterialIndicesBuffers[] : register(t0,
 
 SamplerState AnisoSampler : register(s0);
 SamplerState LinearSampler : register(s1);
-SamplerComparisonState ShadowMapSampler : register(s2);
+SamplerComparisonState ShadowSamplerPCF : register(s2);
 
 //=================================================================================================
 // Input/Output structs
@@ -148,7 +148,7 @@ float4 PSForward(in PSInput input) : SV_Target
 	Texture2DArray sunShadowMap = Tex2DArrayTable[SRVIndices.SunShadowMapIdx];
 
 	float3 shadingResult = ShadePixel(shadingInput, SpecularCubemap, SpecularLUT, LinearSampler,
-		sunShadowMap, ShadowMapSampler);
+		sunShadowMap, ShadowSamplerPCF, AnisoSampler);
 
 	//float nDotL = dot(sunDirectionWS, normalWS);
 	//return float4(nDotL, nDotL, nDotL, nDotL);

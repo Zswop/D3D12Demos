@@ -29,7 +29,7 @@ namespace AppSettings
 	extern float PositiveExponent;
 	extern float NegativeExponent;
 	extern float LightBleedingReduction;
-	extern float EVSMBias;
+	extern float VSMBias;
 
 	void Initialize();
 	void Shutdown();
@@ -67,8 +67,13 @@ namespace AppSettings
 		return value == ShadowMapMode::EVSM2 || value == ShadowMapMode::EVSM4;
 	}
 
+	inline bool UseVSM(ShadowMapMode value)
+	{
+		return value == ShadowMapMode::VSM;
+	}
+
 	inline bool UseFilterableShadows()
 	{
-		return UseEVSM(CurrentSMMode);
+		return UseEVSM(CurrentSMMode) || UseVSM(CurrentSMMode);
 	}
 }

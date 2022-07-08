@@ -20,6 +20,7 @@ enum class ShadowMapMode : uint32
 	DepthMap,
 	EVSM2,
 	EVSM4,
+	VSM,
 
 	NumValues,
 };

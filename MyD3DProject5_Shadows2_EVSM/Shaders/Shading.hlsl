@@ -94,7 +94,7 @@ float3 CalcSpecularIBL(in float3 normal, in float3 viewWS, in float3 specularAlb
 // work around incorrect behavior from the shader compiler
 //-------------------------------------------------------------------------------------------------
 float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Texture2D specularLUT, in SamplerState linearSampler,
-	in Texture2DArray sunShadowMap, in SamplerComparisonState shadowMapSampler)
+	in Texture2DArray sunShadowMap, in SamplerComparisonState pcfSampler, SamplerState vsmSampler)
 {
 	float3 vtxNormalWS = input.TangentFrame._m20_m21_m22;
 	float3 positionWS = input.PositionWS;
@@ -135,10 +135,8 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 
 		const float3 shadowPosOffset = GetShadowPosOffset(saturate(dot(vtxNormalWS, sunDirectionWS)), vtxNormalWS, shadowMapSize.x);
 
-		ShadowSampler shadowSampler = GetShadowSampler(shadowMapSampler, input.AnisoSampler);
-
 		float sunShadowVisibility = SunShadowVisibility(positionWS, depthVS, vtxNormalWS, shadowPosOffset, 0.0f,
-			sunShadowMap, shadowSampler, ShadowCBuffer);
+			sunShadowMap, pcfSampler, vsmSampler, ShadowCBuffer);
 
 		//sunShadowVisibility = 1.0f;
 		//return float3(sunShadowVisibility, 0, 0);

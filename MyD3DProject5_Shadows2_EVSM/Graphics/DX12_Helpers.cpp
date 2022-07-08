@@ -579,7 +579,7 @@ D3D12_STATIC_SAMPLER_DESC ConvertToStaticSampler(const D3D12_SAMPLER_DESC& sampl
 	else if (borderColor == Float4(0.0f, 0.0f, 0.0f, 1.0f))
 		staticDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 	else
-		staticDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;	
+		staticDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 
 	return staticDesc;
 }

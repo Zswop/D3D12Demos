@@ -328,16 +328,16 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 
 	if (AppSettings::UseFilterableShadows())
 		sunShadowConstants.Extra = Float4(AppSettings::PositiveExponent, AppSettings::NegativeExponent,
-			AppSettings::LightBleedingReduction, AppSettings::EVSMBias);
+			AppSettings::LightBleedingReduction, AppSettings::VSMBias);
 	
 	DX12::BindTempConstantBuffer(cmdList, sunShadowConstants, MainPass_ShadowCBuffer, CmdListMode::Graphics);
 
 	SRVIndexConstants SRVIndexConstants;
-	SRVIndexConstants.sunShadowMapIdx = sunShadowMap.SRV();
 	SRVIndexConstants.MaterialTextureIndicesIdx = materialTextureIndices.SRV;
 	SRVIndexConstants.SpecularCubemapLookupIdx = mainPassData.SpecularLUT->SRV;
 	SRVIndexConstants.SpecularCubemapIdx = mainPassData.SpecularCubMap->SRV;
 
+	SRVIndexConstants.sunShadowMapIdx = sunShadowMap.SRV();
 	if (AppSettings::UseFilterableShadows())
 		SRVIndexConstants.sunShadowMapIdx = sunFilterableShadowMap.SRV();
 

@@ -1,8 +1,9 @@
 #include "EVSM.hlsl"
 
-#define ShadowMapMode_DepthMap_ 0
-#define ShadowMapMode_EVSM2_     1
-#define ShadowMapMode_EVSM4_     2
+#define ShadowMapMode_DepthMap_		0
+#define ShadowMapMode_EVSM2_		1
+#define ShadowMapMode_EVSM4_		2
+#define ShadowMapMode_VSM_			3
 
 #ifndef ShadowMapMode_
 	#define ShadowMapMode_ ShadowMapMode_DepthMap_
@@ -53,32 +54,35 @@ struct SunShadowConstantsEVSM
 	#define SunShadowConstants SunShadowConstantsDepthMap
 	typedef uint4 ExtraShadowConstants;
 	typedef SamplerComparisonState ShadowSampler;
-#elif UseEVSM_
+#elif UseEVSM_ || ShadowMapMode_ == ShadowMapMode_VSM_
 	#define SunShadowConstants SunShadowConstantsEVSM
 	typedef EVSMConstants ExtraShadowConstants;
 	typedef SamplerState ShadowSampler;
 #endif
 
-ShadowSampler GetShadowSampler(SamplerComparisonState shadowMapSampler, SamplerState anisoSampler)
+//-------------------------------------------------------------------------------------------------
+// Samples the VSM shadow map
+//-------------------------------------------------------------------------------------------------
+float SampleShadowMapVSM(in float3 shadowPos, in float3 shadowPosDX, in float3 shadowPosDY, in uint arrayIdx,
+	in Texture2DArray shadowMap, in SamplerState vsmSampler, in EVSMConstants vsmConstants)
 {
-#if ShadowMapMode_ == ShadowMapMode_DepthMap_
-	ShadowSampler shadowSampler = shadowMapSampler;
-#elif UseEVSM_
-	ShadowSampler shadowSampler = anisoSampler;
-#endif
-	return shadowSampler;
+	float depth = shadowPos.z;
+
+	float2 occluder = shadowMap.SampleGrad(vsmSampler, float3(shadowPos.xy, arrayIdx), shadowPosDX.xy, shadowPosDY.xy).xy;
+	
+	return ChebyshevUpperBound(occluder, depth, vsmConstants.Bias, vsmConstants.LightBleedingReduction);
 }
 
 //-------------------------------------------------------------------------------------------------
 // Samples the EVSM shadow map with gradients
 //-------------------------------------------------------------------------------------------------
-float SampleShadowMapEVSM(in float3 shadowPos, in float3 shadowPosDX, in float3 shadowPosDY, in uint arrayIdx, in Texture2DArray shadowMap, in SamplerState evsmSampler,
-	in EVSMConstants evsmConstants, in float3 cascadeScale)
+float SampleShadowMapEVSM(in float3 shadowPos, in float3 shadowPosDX, in float3 shadowPosDY, in uint arrayIdx, 
+	in Texture2DArray shadowMap, in SamplerState evsmSampler, in EVSMConstants evsmConstants, in float3 cascadeScale)
 {
 	float2 exponents = GetEVSMExponents(evsmConstants.PositiveExponent, evsmConstants.NegativeExponent, cascadeScale);
 	float2 warpedDepth = WarpDepth(shadowPos.z, exponents);
 
-	//float4 occluder = shadowMap.Sample(evsmSampler, float3(shadowPos.xy, arrayIdx));
+	//float4 occluder = shadowMap.SampleLevel(evsmSampler, float3(shadowPos.xy, arrayIdx), 0);
 	float4 occluder = shadowMap.SampleGrad(evsmSampler, float3(shadowPos.xy, arrayIdx), shadowPosDX.xy, shadowPosDY.xy);
 
 	// Derivative of warping at depth
@@ -88,11 +92,10 @@ float SampleShadowMapEVSM(in float3 shadowPos, in float3 shadowPosDX, in float3 
 #if ShadowMapMode_ == ShadowMapMode_EVSM4_
 	float posContrib = ChebyshevUpperBound(occluder.xz, warpedDepth.x, minVariance.x, evsmConstants.LightBleedingReduction);
 	float negContrib = ChebyshevUpperBound(occluder.yw, warpedDepth.y, minVariance.y, evsmConstants.LightBleedingReduction);
-	float shadowContrib = min(posContrib, negContrib);
+	return min(posContrib, negContrib);
 #else
-	float shadowContrib = ChebyshevUpperBound(occluder.xy, warpedDepth.x, minVariance.x, evsmConstants.LightBleedingReduction);
+	return ChebyshevUpperBound(occluder.xy, warpedDepth.x, minVariance.x, evsmConstants.LightBleedingReduction);
 #endif
-	return shadowContrib;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -246,7 +249,7 @@ float3 GetShadowPosOffset(in float nDotL, in float3 normal, in float shadowMapSi
 // Computes the visibility for a directional light using implicit derivatives
 //--------------------------------------------------------------------------------------
 float SunShadowVisibility(in float3 positionWS, in float depthVS, in float3 normalWS, in float3 shadowPosOffset, in float2 uvOffset,
-	in Texture2DArray sunShadowMap, in ShadowSampler shadowSampler, in SunShadowConstants shadowConstants)
+	in Texture2DArray sunShadowMap, SamplerComparisonState pcfSampler, SamplerState vsmSampler, in SunShadowConstants shadowConstants)
 {
 	// Figure out which cascade to sample from
 	uint cascadeIdx = 0;
@@ -274,9 +277,12 @@ float SunShadowVisibility(in float3 positionWS, in float depthVS, in float3 norm
 	shadowPosDY *= shadowConstants.Base.CascadeScales[cascadeIdx].xyz;
 	
 #if ShadowMapMode_ == ShadowMapMode_DepthMap_
-	return SampleShadowMapPCF(shadowPos, cascadeIdx, sunShadowMap, shadowSampler);
+	return SampleShadowMapPCF(shadowPos, cascadeIdx, sunShadowMap, pcfSampler);
 #elif UseEVSM_
-	return SampleShadowMapEVSM(shadowPos, shadowPosDX, shadowPosDY, cascadeIdx, sunShadowMap, shadowSampler, 
+	return SampleShadowMapEVSM(shadowPos, shadowPosDX, shadowPosDY, cascadeIdx, sunShadowMap, vsmSampler,
 		shadowConstants.Extra, shadowConstants.Base.CascadeScales[cascadeIdx].xyz);
+#elif ShadowMapMode_ == ShadowMapMode_VSM_
+	return SampleShadowMapVSM(shadowPos, shadowPosDX, shadowPosDY, cascadeIdx, sunShadowMap, vsmSampler, 
+		shadowConstants.Extra);
 #endif
 }

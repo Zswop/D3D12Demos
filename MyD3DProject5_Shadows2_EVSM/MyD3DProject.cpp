@@ -138,7 +138,7 @@ void MyD3DProject::Initialize()
 	ShadowHelper::Initialize(AppSettings::CurrentSMMode);
 
 	float aspect = float(swapChain.Width()) / swapChain.Height();
-	camera.Initialize(aspect, Pi_4, 0.1f, 100.0f);
+	camera.Initialize(aspect, Pi_4, 0.1f, 200.0f);
 
 	//sceneModel.GenerateBox(Float3(), Float3(1.0f, 1.0f, 1.0f), Quaternion(),
 	//	L"Sponza_Bricks_a_Albedo.png", L"Sponza_Bricks_a_Normal.png", L"Sponza_Bricks_a_Roughness.png");

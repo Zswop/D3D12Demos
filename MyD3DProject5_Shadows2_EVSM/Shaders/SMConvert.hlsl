@@ -8,9 +8,10 @@
 // Constants
 //=================================================================================================
 
-#define ShadowMapMode_DepthMap_ 0
-#define ShadowMapMode_EVSM2_     1
-#define ShadowMapMode_EVSM4_     2
+#define ShadowMapMode_DepthMap_		0
+#define ShadowMapMode_EVSM2_		1
+#define ShadowMapMode_EVSM4_		2
+#define ShadowMapMode_VSM_			3
 
 #ifndef ShadowMapMode_
 	#define ShadowMapMode_ ShadowMapMode_DepthMap_

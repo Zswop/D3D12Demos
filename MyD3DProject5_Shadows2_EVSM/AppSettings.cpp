@@ -14,7 +14,7 @@ namespace AppSettings
 	float PositiveExponent;
 	float NegativeExponent;
 	float LightBleedingReduction;
-	float EVSMBias;
+	float VSMBias;
 
 	void AppSettings::Initialize()
 	{
@@ -29,7 +29,7 @@ namespace AppSettings
 		PositiveExponent = 40.0f;
 		NegativeExponent = 5.0f;
 		LightBleedingReduction = 0.25f;
-		EVSMBias = 0.001f;
+		VSMBias = 0.001f;
 	}
 
 	void AppSettings::Shutdown()

@@ -14,7 +14,6 @@ float2 GetEVSMExponents(in float positiveExponent, in float negativeExponent, in
 // Input depth should be in [0, 1]
 float2 WarpDepth(float depth, float2 exponents)
 {
-	//return float2(depth, depth);
 	// Rescale depth in [-1, 1]
 	depth = 2.0f * depth - 1.0f;
 	float pos =  exp( exponents.x * depth);

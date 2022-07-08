@@ -76,6 +76,8 @@ DXGI_FORMAT SMFormat(ShadowMapMode smMode)
 		return DXGI_FORMAT_R32G32B32A32_FLOAT;
 	else if (smMode == ShadowMapMode::DepthMap)
 		return DXGI_FORMAT_R32_FLOAT;
+	else if (smMode == ShadowMapMode::VSM)
+		return DXGI_FORMAT_R16G16_UNORM;
 
 	Assert_(false);
 	return DXGI_FORMAT_UNKNOWN;
