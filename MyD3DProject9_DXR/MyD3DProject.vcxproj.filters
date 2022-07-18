@@ -111,15 +111,6 @@
     <ClInclude Include="AppSettings.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HosekSky\ArHosekSkyModelData_CIEXYZ.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HosekSky\ArHosekSkyModelData_RGB.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HosekSky\ArHosekSkyModelData_Spectral.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Sampling.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -154,6 +145,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui_internal.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_rectpack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_textedit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imstb_truetype.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Profiler.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -267,6 +270,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_draw.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_widgets.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Profiler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

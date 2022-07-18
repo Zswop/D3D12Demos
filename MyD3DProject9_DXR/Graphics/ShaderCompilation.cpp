@@ -114,7 +114,7 @@ static const wstring baseCacheDir = L"ShaderCache\\";
 #if _DEBUG
 static const wstring cacheSubDir = L"Debug\\";
 #else
-static const std::wstring cacheSubDir = L"Release\\";
+static const wstring cacheSubDir = L"Release\\";
 #endif
 
 static const wstring cacheDir = baseCacheDir + cacheSubDir;

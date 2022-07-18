@@ -29,6 +29,7 @@
     <ClInclude Include="Graphics\LightCluster.h" />
     <ClInclude Include="Graphics\Model.h" />
     <ClInclude Include="Graphics\PostProcessHelper.h" />
+    <ClInclude Include="Graphics\Profiler.h" />
     <ClInclude Include="Graphics\Sampling.h" />
     <ClInclude Include="Graphics\SH.h" />
     <ClInclude Include="Graphics\ShaderCompilation.h" />
@@ -74,6 +75,7 @@
     <ClCompile Include="Graphics\LightCluster.cpp" />
     <ClCompile Include="Graphics\Model.cpp" />
     <ClCompile Include="Graphics\PostProcessHelper.cpp" />
+    <ClCompile Include="Graphics\Profiler.cpp" />
     <ClCompile Include="Graphics\Sampling.cpp" />
     <ClCompile Include="Graphics\SH.cpp" />
     <ClCompile Include="Graphics\ShaderCompilation.cpp" />

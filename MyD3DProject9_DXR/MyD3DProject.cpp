@@ -718,13 +718,47 @@ void MyD3DProject::RenderResolve()
 
 	//resolveTarget.MakeReadable(cmdList);
 
-	DX12::TransitionResource(cmdList, resolveTarget.Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	DX12::TransitionResource(cmdList, prevFrameTarget.Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-	
+	{
+		D3D12_RESOURCE_BARRIER barriers[2] = {};
+
+		barriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[0].Transition.pResource = resolveTarget.Resource();
+		barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+		barriers[0].Transition.Subresource = 0;
+
+		barriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[1].Transition.pResource = prevFrameTarget.Resource();
+		barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+		barriers[1].Transition.Subresource = 0;
+
+		cmdList->ResourceBarrier(ArraySize_(barriers), barriers);
+	}
+
 	cmdList->CopyResource(prevFrameTarget.Resource(), resolveTarget.Resource());
 
-	DX12::TransitionResource(cmdList, resolveTarget.Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-	DX12::TransitionResource(cmdList, prevFrameTarget.Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	{
+		D3D12_RESOURCE_BARRIER barriers[2] = {};
+
+		barriers[0].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[0].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[0].Transition.pResource = resolveTarget.Resource();
+		barriers[0].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
+		barriers[0].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barriers[0].Transition.Subresource = 0;
+
+		barriers[1].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[1].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[1].Transition.pResource = prevFrameTarget.Resource();
+		barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+		barriers[1].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barriers[1].Transition.Subresource = 0;
+
+		cmdList->ResourceBarrier(ArraySize_(barriers), barriers);
+	}
 }
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
