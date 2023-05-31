@@ -158,7 +158,7 @@ float4 UberPost(in PSInput input) : SV_Target0
 	expConstants.ISO = ISO;
 
 	float exposure = 0.0;
-	color = CalcExposedColor(expConstants, color, exposure);
+	color = CalcExposedColor(expConstants, color, 0, exposure);
 
 	color = ToneMap(color);
 

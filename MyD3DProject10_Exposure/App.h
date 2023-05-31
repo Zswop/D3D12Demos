@@ -51,6 +51,8 @@ protected:
 	D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 	uint32 adapterIdx = 0;
 
+	Float4x4 appViewMatrix;
+
 	static const uint64 MaxLogMessages = 1024;
 	std::string logMessages[MaxLogMessages];
 	volatile int64 numLogMessages = 0;

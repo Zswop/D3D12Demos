@@ -407,8 +407,10 @@ void MyD3DProject::Update(const Timer& timer)
 		camera.SetXRotation(xRot);
 		camera.SetYRotation(yRot);
 	}
-
+	
 	UpdateJitter();
+
+	appViewMatrix = camera.ViewMatrix();
 
 	lightCluster.UpdateLights(camera);
 
@@ -689,13 +691,13 @@ void MyD3DProject::RenderResolve()
 	ResolveConstants resolveConstants;
 	float width = static_cast<float>(mainTarget.Width());
 	float height = static_cast<float>(mainTarget.Height());
-	resolveConstants.FilterType = static_cast<uint32>(AppSettings::ResolveFilterType);
+	resolveConstants.FilterType = static_cast<uint32>(AppSettings::ResolveFilter);
 	resolveConstants.SampleRadius = static_cast<uint32>(AppSettings::ResolveFilterRadius + 0.499f);
 	resolveConstants.TextureSize = Float2(width, height);
 	resolveConstants.FilterRadius = AppSettings::ResolveFilterRadius;
 	resolveConstants.FilterGaussianSigma = AppSettings::FilterGaussianSigma;
 	
-	resolveConstants.Exposure = AppSettings::Exposure;
+	resolveConstants.Exposure = AppSettings::ManualExposure;
 	resolveConstants.ExposureFilterOffset = AppSettings::ExposureFilterOffset;
 
 	resolveConstants.EnableTemporalAA = AppSettings::EnableTemporalAA;

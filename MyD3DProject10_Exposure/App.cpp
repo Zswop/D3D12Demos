@@ -11,7 +11,7 @@ namespace AppSettings
 {
 	void Initialize();
 	void Shutdown();
-	void Update(uint32 displayWidth, uint32 displayHeight);
+	void Update(uint32 displayWidth, uint32 displayHeight, const Framework::Float4x4& viewMatrix);
 	void UpdateCBuffer();
 }
 
@@ -149,7 +149,7 @@ void App::Initialize_Internal()
 
 void App::Shutdown_Internal()
 {
-	DX12::FlushGPU();	
+	DX12::FlushGPU();
 	DestroyPSOs();
 	ImGuiHelper::Shutdown();
 	ShutdownShaders();
@@ -172,7 +172,7 @@ void App::Update_Internal()
 
 	CalculateFPS();
 
-	AppSettings::Update(displayWidth, displayHeight);
+	AppSettings::Update(displayWidth, displayHeight, appViewMatrix);
 
 	Update(appTimer);
 }

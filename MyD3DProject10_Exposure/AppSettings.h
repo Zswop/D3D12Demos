@@ -3,6 +3,7 @@
 #include "PCH.h"
 #include "Graphics\\GraphicsTypes.h"
 #include "F12_Math.h"
+#include "Settings.h"
 
 using namespace Framework;
 
@@ -17,6 +18,8 @@ enum class SkyModes
 	NumValues
 };
 
+typedef EnumSettingT<SkyModes> SkyModesSetting;
+
 enum class Scenes
 {
 	Sponza = 0,
@@ -24,6 +27,8 @@ enum class Scenes
 
 	NumValues
 };
+
+typedef EnumSettingT<Scenes> ScenesSetting;
 
 enum class MSAAModes
 {
@@ -35,7 +40,9 @@ enum class MSAAModes
 	NumValues
 };
 
-enum class ResolveFilterTypes
+typedef EnumSettingT<MSAAModes> MSAAModesSetting;
+
+enum class ResolveFilters
 {
 	Box = 0,
 	Triangle,
@@ -53,6 +60,8 @@ enum class ResolveFilterTypes
 	Sinc,
 };
 
+typedef EnumSettingT<ResolveFilters> ResolveFiltersSetting;
+
 enum class JitterModes
 {
 	None = 0,
@@ -65,40 +74,58 @@ enum class JitterModes
 	NumValues
 };
 
+typedef EnumSettingT<JitterModes> JitterModesSetting;
+
+enum class ExposureModes
+{
+	ManualSimple = 0,
+	Manual_SBS = 1,
+	Manual_SOS = 2,
+	Automatic = 3,
+
+	NumValues
+};
+
+typedef EnumSettingT<ExposureModes> ExposureModesSetting;
+
 namespace AppSettings
 {
-	extern SkyModes SkyMode;
-	extern Float3 SunDirection;
-	extern Float3 GroundAlbedo;
-	extern float Turbidity;
-	extern float SunSize;
+	extern SkyModesSetting SkyMode;
+	extern DirectionSetting SunDirection;
+	extern ColorSetting GroundAlbedo;
+	extern FloatSetting Turbidity;
+	extern FloatSetting SunSize;
 
-	extern Scenes CurrentScene;
+	extern ScenesSetting CurrentScene;
 
-	extern MSAAModes MSAAMode;
-	extern float ResolveFilterRadius;
-	extern ResolveFilterTypes ResolveFilterType;
-	extern float FilterGaussianSigma;
+	extern MSAAModesSetting MSAAMode;
+	extern FloatSetting ResolveFilterRadius;
+	extern FloatSetting FilterGaussianSigma;
+	extern ResolveFiltersSetting ResolveFilter;
 
-	extern float ExposureFilterOffset;
-	extern float Exposure;
+	extern ExposureModesSetting ExposureMode;
+	extern FloatSetting ExposureFilterOffset;
+	extern FloatSetting ManualExposure;
 
-	extern bool32 EnableTemporalAA;
-	extern float TemporalAABlendFactor;
-	extern JitterModes JitterMode;
+	extern FloatSetting BloomExposure;
+	extern FloatSetting BloomMagnitude;
+	extern FloatSetting BloomBlurSigma;
 
-	extern bool32 EnableRayTracing;
+	extern BoolSetting EnableTemporalAA;
+	extern FloatSetting TemporalAABlendFactor;
+	extern JitterModesSetting JitterMode;
 
-	extern bool32 ShowClusterVisualizer;
+	extern BoolSetting EnableRayTracing;
+	extern BoolSetting ShowClusterVisualizer;
 
 	const extern uint32 CBufferRegister;
 	extern ConstantBuffer CBuffer;
 
 	void Initialize();
 	void Shutdown();
-	void Update(uint32 displayWidth, uint32 displayHeight);
+	void Update(uint32 displayWidth, uint32 displayHeight, const Float4x4& viewMatrix);
 	void UpdateCBuffer();
-	
+
 	void BindCBufferGfx(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
 	void BindCBufferCompute(ID3D12GraphicsCommandList* cmdList, uint32 rootParameter);
 }

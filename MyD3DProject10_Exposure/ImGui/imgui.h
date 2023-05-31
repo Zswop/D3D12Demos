@@ -598,6 +598,8 @@ namespace ImGui
     IMGUI_API void*         MemAlloc(size_t size);
     IMGUI_API void          MemFree(void* ptr);
 
+    static inline bool      CollapsingHeader(const char* label, const char* str_id, bool framed = true, bool default_open = false) { (void)str_id; (void)framed; ImGuiTreeNodeFlags default_open_flags = 1 << 5; return CollapsingHeader(label, (default_open ? default_open_flags : 0)); } // OBSOLETE 1.49+
+
 } // namespace ImGui
 
 // Flags for ImGui::Begin()

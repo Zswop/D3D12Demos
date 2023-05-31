@@ -52,6 +52,7 @@
     <ClInclude Include="InterfacePointers.h" />
     <ClInclude Include="MurmurHash.h" />
     <ClInclude Include="PCH.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="Window.h" />
@@ -94,6 +95,7 @@
     <ClCompile Include="HosekSky\ArHosekSkyModel.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="MurmurHash.cpp" />
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Window.cpp" />

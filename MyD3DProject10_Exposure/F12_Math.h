@@ -536,24 +536,57 @@ inline Float3 LatLongTexcoordToCartesian(Float2 uv)
 	return Float3(x, y, z);
 }
 
-inline Float3 SphericalToCartesian(Float2 thetaPhi)
+// linear -> sRGB conversion
+inline Float3 LinearTosRGB(Float3 color)
 {
-	// https://graphics.stanford.edu/papers/envmap/envmap.pdf
+	Float3 x = color * 12.92f;
+	Float3 y = 1.055f * Pow(color, 1.0f / 2.4f) - 0.055f;
 
-	float theta = thetaPhi.x;
-	float phi = thetaPhi.y;
+	Float3 clr = color;
+	clr.x = color.x < 0.0031308f ? x.x : y.x;
+	clr.y = color.y < 0.0031308f ? x.y : y.y;
+	clr.z = color.z < 0.0031308f ? x.z : y.z;
 
-	float sinTheta, cosTheta;
-	SinCos(theta, &sinTheta, &cosTheta);
+	return clr;
+}
 
-	float sinPhi, cosPhi;
-	SinCos(phi, &sinPhi, &cosPhi);
+// sRGB -> linear conversion
+inline Float3 SRGBToLinear(Float3 color)
+{
+	Float3 x = color / 12.92f;
+	Float3 y = Pow((color + 0.055f) / 1.055f, 2.4f);
 
-	float x = sinTheta * cosPhi;
-	float y = sinTheta * sinPhi;
-	float z = cosTheta;
+	Float3 clr = color;
+	clr.x = color.x <= 0.04045f ? x.x : y.x;
+	clr.y = color.y <= 0.04045f ? x.y : y.y;
+	clr.z = color.z <= 0.04045f ? x.z : y.z;
 
-	return Float3(x, y, z);
+	return clr;
+}
+
+inline float ComputeLuminance(Float3 color)
+{
+	return Float3::Dot(color, Float3(0.299f, 0.587f, 0.114f));
+}
+
+// Convert from spherical coordinates to Cartesian coordinates(x, y, z)
+// Theta represents how far away from the zenith (north pole/+Y) and phi represents how far
+// away from the 'right' axis (+X).
+inline void SphericalToCartesianXYZYUP(float r, float theta, float phi, Float3& xyz)
+{
+	xyz.x = r * std::cosf(phi) * std::sinf(theta);
+	xyz.y = r * std::cosf(theta);
+	xyz.z = r * std::sinf(theta) * std::sinf(phi);
+}
+
+// Convert from spherical coordinates to Cartesian coordinates(x, y, z)
+inline Float3 SphericalToCartesian(float azimuth, float elevation)
+{
+	Float3 xyz;
+	xyz.x = std::cos(azimuth) * std::cos(elevation);
+	xyz.y = std::sin(elevation);
+	xyz.z = std::sin(azimuth) * std::cos(elevation);
+	return xyz;
 }
 
 inline Float2 CartesianToSpherical(Float3 p)

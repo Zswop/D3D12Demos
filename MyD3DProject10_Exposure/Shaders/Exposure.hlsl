@@ -65,9 +65,9 @@ float Log2Exposure(in ExposureConstants expConstants)
 }
 
 // Determines the color based on exposure settings
-float3 CalcExposedColor(in ExposureConstants expConstants, in float3 color, out float exposure)
+float3 CalcExposedColor(in ExposureConstants expConstants, in float3 color, in float offset, out float exposure)
 {
     exposure = Log2Exposure(expConstants);
-    //exposure += offset;
+    exposure += offset;
     return exp2(exposure) * color;
 }
