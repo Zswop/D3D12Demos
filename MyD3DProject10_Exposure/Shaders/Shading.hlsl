@@ -10,7 +10,7 @@ struct ShadingConstants
 {
 	float3 SunDirectionWS;
 	float CosSunAngularRadius;
-	float3 SunIrradiance;
+	float3 SunIlluminance;
 	float SinSunAngularRadius;
 	float3 CameraPosWS;
 	float ShadowNormalBias;
@@ -22,7 +22,7 @@ struct ShadingConstants
 
 	float NearClip;
 	float FarClip;
-	float Padding0;
+	bool RenderLights;
 	float Padding1;
 
 	float2 RTSize;
@@ -95,6 +95,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	float3 normalTS;
 	normalTS.xy = input.NormalMap.xy * 2.0f - 1.0f;
 	normalTS.z = sqrt(1.0f - saturate(normalTS.x * normalTS.x + normalTS.y * normalTS.y));
+	normalTS = lerp(float3(0, 0, 1), normalTS, 0.5);
 	float3 normalWS = normalize(mul(normalTS, input.TangentFrame));
 	
 	float4 albedoMap = input.AlbedoMap;
@@ -120,7 +121,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	float depthVS = input.DepthVS;
 	float3 cameraPosWS = CBuffer.CameraPosWS;
 	float3 sunDirectionWS = CBuffer.SunDirectionWS;
-	float3 sunIrradiance = CBuffer.SunIrradiance;
+	float3 sunIlluminance = CBuffer.SunIlluminance;
 
 	//
 	ShadowSampler shadowSampler = GetShadowSampler(shadowMapSampler, input.AnisoSampler);
@@ -138,12 +139,13 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 		float sunShadowVisibility = SunShadowVisibility(positionWS, depthVS, vtxNormalWS, shadowPosOffset, 0.0f,
 			sunShadowMap, shadowSampler, ShadowCBuffer);
 
-		output += CalcLighting(normalWS, sunDirectionWS, sunIrradiance, diffuseAlbedo, specularAlbedo,
+		output += CalcLighting(normalWS, sunDirectionWS, sunIlluminance, diffuseAlbedo, specularAlbedo,
 			roughness, positionWS, cameraPosWS, msEnergyCompensation) * sunShadowVisibility;
 	}
 	
 	// Add in the other lights
 	uint numLights = 0;
+	if (CBuffer.RenderLights)
 	{
 		uint2 pixelPos = input.PositionSS;
 		float zRange = CBuffer.FarClip - CBuffer.NearClip;

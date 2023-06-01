@@ -354,6 +354,12 @@ void MyD3DProject::InitializeScene(Scenes currentScene)
 
 	currentModel = &sceneModels[currSceneIdx];
 
+	if (currentModel->SpotLights().Size() == 0)
+	{
+		AppSettings::RenderLights.SetValue(false);
+		AppSettings::RenderLights.SetReadOnly(true);
+	}
+	
 	lightCluster.Initialize(&(currentModel->ModelSpotLights()));
 	meshRenderer.Initialize(currentModel);
 	pathTracer.Initialize(currentModel);
@@ -414,7 +420,8 @@ void MyD3DProject::Update(const Timer& timer)
 
 	lightCluster.UpdateLights(camera);
 
-	skyCache.Init(AppSettings::SunDirection, AppSettings::SunSize, AppSettings::GroundAlbedo, AppSettings::Turbidity, true);
+	skyCache.Init(AppSettings::SunDirection, AppSettings::SunTintColor, AppSettings::SunIntensityScale,
+		AppSettings::SunSize, AppSettings::GroundAlbedo, AppSettings::Turbidity, true);
 	envSH = skyCache.SH;
 
 	if ((uint32)AppSettings::SkyMode >= AppSettings::CubeMapStart)
@@ -528,12 +535,14 @@ void MyD3DProject::RenderRayTracing()
 void MyD3DProject::RenderRasterizing()
 {
 	ID3D12GraphicsCommandList4* cmdList = DX12::CmdList;
-
-	lightCluster.RenderClusters(cmdList, camera);
+	
+	if (AppSettings::RenderLights)
+		lightCluster.RenderClusters(cmdList, camera);
 
 	meshRenderer.RenderSunShadowMap(cmdList, camera);
 
 	// Update the light constant buffer
+	if (AppSettings::RenderLights)
 	{
 		meshRenderer.RenderSpotLightShadowMap(cmdList, camera);
 
@@ -622,6 +631,7 @@ void MyD3DProject::RenderForward()
 	mainPassData.NumYTiles = lightCluster.NumYTiles();
 	mainPassData.ClusterTileSize = ClusterTileSize;
 	mainPassData.NumZTiles = NumZTiles;
+	mainPassData.RenderLights = AppSettings::RenderLights;
 
 	mainPassData.RTSize.x = (float)mainTarget.Width();
 	mainPassData.RTSize.y = (float)mainTarget.Height();
@@ -639,7 +649,7 @@ void MyD3DProject::RenderForward()
 	}
 	else
 	{
-		skybox.RenderSky(cmdList, camera.ViewMatrix(), camera.ProjectionMatrix(), skyCache, true);
+		skybox.RenderSky(cmdList, camera.ViewMatrix(), camera.ProjectionMatrix(), skyCache, Float3(1.0f, 1.0f, 1.0f), true);
 	}
 
 	{

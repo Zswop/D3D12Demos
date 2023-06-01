@@ -27,6 +27,8 @@ struct MainPassData
 	uint64 NumYTiles = 0;
 	uint64 ClusterTileSize = 0;
 
+	bool32 RenderLights = false;
+
 	Float2 RTSize;
 	Float2 JitterOffset;
 
@@ -38,7 +40,7 @@ struct ShadingConstants
 {
 	Float4Align Float3 SunDirectionWS;
 	float CosSunAngularRadius = 0.0f;
-	Float4Align Float3 SunIrradiance;
+	Float4Align Float3 SunIlluminance;
 	float SinSunAngularRadius = 0.0f;
 	Float4Align Float3 CameraPosWS;
 	float ShadowNormalBias = 0.01f;
@@ -50,7 +52,7 @@ struct ShadingConstants
 
 	float NearClip = 0.0f;
 	float FarClip = 0.0f;
-	float Padding0 = 0.0;
+	bool32 RenderLights = false;
 	float Padding1 = 0.0;
 
 	Float2 RTSize;

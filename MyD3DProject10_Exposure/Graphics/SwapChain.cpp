@@ -11,8 +11,8 @@ SwapChain::SwapChain()
 	refreshRate.Denominator = 1;
 
 	// TODO: figure out if we should default to 1280x720 or 1920x1080
-	width = 1280;
-	height = 720;
+	width = 1920;
+	height = 1080;
 }
 
 SwapChain::~SwapChain()

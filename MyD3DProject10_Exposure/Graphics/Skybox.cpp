@@ -20,15 +20,16 @@ static float AngleBetween(const Float3& dir0, const Float3& dir1)
 	return std::acos(std::max(Float3::Dot(dir0, dir1), 0.00001f));
 }
 
-// Returns the result of performing a irradiance integral over the portion
+// Returns the result of performing a irradiance/illuminance integral over the portion
 // of the hemisphere covered by a region with angular radius = theta
-static float IrradianceIntegral(float theta)
+static float IlluminanceIntegral(float theta)
 {
 	float sinTheta = std::sin(theta);
 	return Pi * sinTheta * sinTheta;
 }
 
-void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& groundAlbedo_, float turbidity, bool createCubemap)
+void SkyCache::Init(const Float3& sunDirection_, const Float3& sunTintColor, float sunIntensityScale, 
+	float sunSize, const Float3& groundAlbedo_, float turbidity, bool createCubemap)
 {
 	Float3 sunDirection = sunDirection_;
 	Float3 groundAlbedo = groundAlbedo_;
@@ -39,7 +40,8 @@ void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& gr
 	sunSize = Max(sunSize, 0.01f);
 
 	// Do nothing if we're already up-to-date
-	if (Initialized() && sunDirection == SunDirection && groundAlbedo == Albedo && turbidity == Turbidity && SunSize == sunSize)
+	if (Initialized() && sunDirection == SunDirection && sunTintColor == SunTintColor && sunIntensityScale == SunIntensityScale
+		&& groundAlbedo == Albedo && turbidity == Turbidity && SunSize == sunSize)
 		return;
 
 	Shutdown();
@@ -53,6 +55,8 @@ void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& gr
 	Albedo = groundAlbedo;
 	Elevation = elevation;
 	SunDirection = sunDirection;
+	SunTintColor = sunTintColor;
+	SunIntensityScale = sunIntensityScale;
 	Turbidity = turbidity;
 	SunSize = sunSize;
 
@@ -66,8 +70,8 @@ void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& gr
 	ArHosekSkyModelState* skyStates[NumSpectralSamples] = { };
 	for (int32 i = 0; i < NumSpectralSamples; ++i)
 		skyStates[i] = arhosekskymodelstate_alloc_init(thetaS, turbidity, groundAlbedoSpectrum[i]);
-
-	SunIrradiance = Float3(0.0f);
+	
+	Float3 sunIrridiance = 0.0f;
 
 	// Uniformly sample the solid area of the solar disc.
 	// Note that we use the *actual* sun size here and not the passed in the sun direction, so that
@@ -102,16 +106,19 @@ void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& gr
 			// and have the resulting lighting still fit comfortably in an FP16 render target
 			sampleRadiance *= FP16Scale;
 
-			SunIrradiance += sampleRadiance * Saturate(Float3::Dot(sampleDir, sunDirection));
+			sunIrridiance += sampleRadiance * Saturate(Float3::Dot(sampleDir, sunDirection));
 		}
 	}
 
 	// Apply the monte carlo factor of 1 / (PDF * N)
 	float pdf = SampleDirectionCone_PDF(CosPhysicalSunSize);
-	SunIrradiance *= (1.0f / NumSamples) * (1.0f / NumSamples) * (1.0f / pdf);
+	sunIrridiance *= (1.0f / NumSamples) * (1.0f / NumSamples) * (1.0f / pdf);
 
+	// Get the sun's luminance, then apply tint and scale factors
 	// Account for luminous efficiency and coordinate system scaling
-	SunIrradiance *= 683.0f * 100.0f;
+	SunIlluminance = 683.0f * 100.0f * sunIrridiance;
+	SunIlluminance = SunIlluminance * sunTintColor;
+	SunIlluminance = SunIlluminance * sunIntensityScale;
 
 	// Clean up
 	for (uint64 i = 0; i < NumSpectralSamples; ++i)
@@ -122,7 +129,8 @@ void SkyCache::Init(const Float3& sunDirection_, float sunSize, const Float3& gr
 
 	// Compute a uniform solar radiance value such that integrating this radiance over a disc with
 	// the provided angular radius
-	SunRadiance = SunIrradiance / IrradianceIntegral(DegToRad(SunSize));
+
+	SunLuminance = SunIlluminance / IlluminanceIntegral(DegToRad(SunSize));
 
 	if (createCubemap)
 	{
@@ -194,8 +202,10 @@ void SkyCache::Shutdown()
 	Albedo = 0.0f;
 	Elevation = 0.0f;
 	SunDirection = 0.0f;
-	SunRadiance = 0.0f;
-	SunIrradiance = 0.0f;
+	SunTintColor = 0.0f;
+	SunIntensityScale = 0.0f;
+	SunLuminance = 0.0f;
+	SunIlluminance = 0.0f;
 	SH = SH9Color();
 }
 
@@ -412,16 +422,16 @@ void Skybox::RenderSky(ID3D12GraphicsCommandList* cmdList, const Float4x4& view,
 	psConstants.Scale = scale;
 	if (enableSun)
 	{
-		Float3 sunColor = skyCache.SunRadiance;
+		Float3 sunColor = skyCache.SunLuminance;
 		float maxComponent = Max(sunColor.x, Max(sunColor.y, sunColor.z));
 		if (maxComponent > FP16Max)
 			sunColor *= (FP16Max / maxComponent);
-		psConstants.SunColor = Float3::Clamp(sunColor, 0.0f, FP16Max);
+		psConstants.SunLuminance = Float3::Clamp(sunColor, 0.0f, FP16Max);
 		psConstants.CosSunAngularRadius = std::cos(DegToRad(skyCache.SunSize));
 	}
 	else
 	{
-		psConstants.SunColor = 0.0f;
+		psConstants.SunLuminance = 0.0f;
 		psConstants.CosSunAngularRadius = 0.0f;
 	}
 

@@ -30,9 +30,9 @@ struct RayTraceConstants
 
 	Float3 SunDirectionWS;
 	float CosSunAngularRadius = 0.0f;
-	Float3 SunIrradiance;
+	Float3 SunIlluminance;
 	float SinSunAngularRadius = 0.0f;
-	Float3 SunRenderColor;
+	Float3 SunLuminance;
 	uint32 Padding = 0;
 
 	Float3 CameraPosWS;
@@ -332,10 +332,10 @@ void DXRPathTracer::Render(ID3D12GraphicsCommandList4* cmdList, const Camera& ca
 
 	const SkyCache* skyCache = rtData.SkyCache;
 	rtConstants.SunDirectionWS = skyCache->SunDirection;
-	rtConstants.SunIrradiance = skyCache->SunIrradiance;
+	rtConstants.SunIlluminance = skyCache->SunIlluminance;
 	rtConstants.CosSunAngularRadius = std::cos(DegToRad(skyCache->SunSize));
 	rtConstants.SinSunAngularRadius = std::sin(DegToRad(skyCache->SunSize));
-	rtConstants.SunRenderColor = skyCache->SunRadiance;
+	rtConstants.SunLuminance = skyCache->SunLuminance;
 
 	rtConstants.CameraPosWS = camera.Position();
 	rtConstants.CurrSampleIdx = rtCurrSampleIdx;

@@ -21,12 +21,13 @@ struct SRVIndicesLayout
 
 cbuffer PPSettings : register(b1)
 {
-	float BloomExposure;
 	int ExposureMode;
 	float ManualExposure;
 	float ApertureFNumber;
 	float ShutterSpeedValue;
 	float ISO;
+
+	float BloomExposure;
 };
 
 ConstantBuffer<SRVIndicesLayout> SRVIndices : register(b0);

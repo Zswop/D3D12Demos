@@ -17,8 +17,10 @@ struct SkyCache
 	ArHosekSkyModelState* StateG = nullptr;
 	ArHosekSkyModelState* StateB = nullptr;
 	Float3 SunDirection;
-	Float3 SunRadiance;
-	Float3 SunIrradiance;
+	Float3 SunTintColor;
+	float SunIntensityScale;
+	Float3 SunLuminance;
+	Float3 SunIlluminance;
 	float SunSize = 0.0f;
 	float Turbidity = 0.0f;
 	Float3 Albedo;
@@ -26,7 +28,8 @@ struct SkyCache
 	Texture CubeMap;
 	SH9Color SH;
 	
-	void Init(const Float3& sunDirection, float sunSize, const Float3& groundAlbedo, float turbidity, bool createCubemap);
+	void Init(const Float3& sunDirection, const Float3& sunTintColor, float sunIntensityScale,
+		float sunSize, const Float3& groundAlbedo, float turbidity, bool createCubemap);
 	void Shutdown();
 	~SkyCache();
 
@@ -79,7 +82,7 @@ protected:
 	{
 		Float3 SunDirection = Float3(0.0f, 1.0f, 0.0f);
 		float CosSunAngularRadius = 0.0f;
-		Float3 SunColor = 1.0f;
+		Float3 SunLuminance = 1.0f;
 		uint32 Padding = 0;
 		Float3 Scale = 1.0f;
 		uint32 EnvMapIdx = uint32(-1);

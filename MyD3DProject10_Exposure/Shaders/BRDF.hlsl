@@ -108,11 +108,10 @@ float2 GGXEnvironmentBRDFScaleBias(in float nDotV, in float sqrtRoughness)
 //-------------------------------------------------------------------------------------------------
 // Calculates the lighting result for an analytical light source
 //-------------------------------------------------------------------------------------------------
-float3 CalcLighting(in float3 normal, in float3 lightDir, in float3 peekIrradiance, 
+float3 CalcLighting(in float3 normal, in float3 lightDir, in float3 lightColor,
 	in float3 diffuseAlbedo, in float3 specularAlbedo, in float roughness, in float3 positionWS, 
 	in float3 cameraPosWS, in float3 msEnergyCompensation)
-{
-	//float3 lighting = diffuseAlbedo;
+{	
 	float3 lighting = diffuseAlbedo * InvPi;
 
 	float3 view = normalize(cameraPosWS - positionWS);
@@ -128,5 +127,5 @@ float3 CalcLighting(in float3 normal, in float3 lightDir, in float3 peekIrradian
 		lighting += specular * fresnel * msEnergyCompensation;
 	}
 
-	return lighting * nDotL * peekIrradiance;
+	return lighting * nDotL * lightColor;
 }

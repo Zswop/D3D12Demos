@@ -15,7 +15,7 @@ struct PSConstants
 {
 	float3 SunDirection;
 	float CosSunAngularRadius;
-	float3 SunColor;
+	float3 SunLuminance;
 	float3 Scale;
 	uint EnvMapIdx;
 };
@@ -79,7 +79,7 @@ float4 SkyboxPS(in VSOutput input) : SV_Target
 	{
 		float cosSunAngle = dot(dir, PSCBuffer.SunDirection);
 		if (cosSunAngle >= PSCBuffer.CosSunAngularRadius)
-			color = PSCBuffer.SunColor;
+			color = PSCBuffer.SunLuminance;
 	}
 
 	color *= PSCBuffer.Scale;

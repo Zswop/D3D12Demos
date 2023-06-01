@@ -15,9 +15,9 @@ struct RayTraceConstants
 
 	float3 SunDirectionWS;
 	float CosSunAngularRadius;
-	float3 SunIrradiance;
+	float3 SunIlluminance;
 	float SinSunAngularRadius;
-	float3 SunRenderColor;
+	float3 SunLuminance;
 	uint Padding;
 
 	float3 CameraPosWS;
@@ -253,7 +253,7 @@ static float3 PathTrace(in MeshVertex hitSurface, in MaterialTextureIndices mate
 		const uint missShaderIdx = RayTypeShadow;
 		TraceRay(Scene, traceRayFlags, 0xFFFFFFFF, hitGroupOffset, hitGroupGeoMultiplier, missShaderIdx, ray, payload);
 
-		radiance += CalcLighting(normalWS, sunDirection, RayTraceCB.SunIrradiance, diffuseAlbedo, specularAlbedo,
+		radiance += CalcLighting(normalWS, sunDirection, RayTraceCB.SunIlluminance, diffuseAlbedo, specularAlbedo,
 			roughness, positionWS, incomingRayOriginWS, msEnergyCompensation) * payload.Visibility;
 	}
 
@@ -503,7 +503,7 @@ void MissShader(inout PrimaryPayload payload)
 	{
 		float cosSunAngle = dot(rayDir, RayTraceCB.SunDirectionWS);
 		if (cosSunAngle >= RayTraceCB.CosSunAngularRadius)
-			payload.Radiance = RayTraceCB.SunRenderColor;
+			payload.Radiance = RayTraceCB.SunLuminance;
 	}
 }
 

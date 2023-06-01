@@ -192,6 +192,7 @@ void MeshRenderer::Initialize(const Model* model_)
 		sunShadowMap.Initialize(dbInit);
 	}
 
+	if (model->SpotLights().Size() > 0)
 	{
 		DepthBufferInit dbInit;
 		dbInit.Width = SpotLightShadowMapSize;
@@ -453,7 +454,7 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 
 	ShadingConstants psConstants;
 	psConstants.SunDirectionWS = mainPassData.SkyCache->SunDirection;
-	psConstants.SunIrradiance = mainPassData.SkyCache->SunIrradiance; //Float3(1.0f, 1.0f, 1.0f);
+	psConstants.SunIlluminance = mainPassData.SkyCache->SunIlluminance;
 	psConstants.CosSunAngularRadius = std::cos(DegToRad(mainPassData.SkyCache->SunSize));
 	psConstants.SinSunAngularRadius = std::sin(DegToRad(mainPassData.SkyCache->SunSize));
 	psConstants.CameraPosWS = camera.Position();
@@ -464,6 +465,7 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 	psConstants.NumXTiles = uint32(mainPassData.NumXTiles);
 	psConstants.NumXYTiles = uint32(mainPassData.NumXTiles * mainPassData.NumYTiles);
 	psConstants.ClusterTileSize = uint32(mainPassData.ClusterTileSize);
+	psConstants.RenderLights = mainPassData.RenderLights;
 	psConstants.NearClip = camera.NearClip();
 	psConstants.FarClip = camera.FarClip();
 
