@@ -10,4 +10,4 @@ HDR
 AA
 ![image](https://user-images.githubusercontent.com/6214590/206664854-1bbcec3c-4cd2-4b6a-9b47-ed8531037967.png)
 Raytracing
-![image](https://github.com/Zswop/D3D12Demos/assets/6214590/ddcddf8e-f925-4f8d-9400-3273518cfd68)
+![image](https://github.com/Zswop/D3D12Demos/assets/6214590/7a5726f9-4381-4e75-a194-9bbe0b4b2f2d)
