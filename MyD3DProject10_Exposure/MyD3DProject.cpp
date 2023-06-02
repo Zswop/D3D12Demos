@@ -502,7 +502,8 @@ void MyD3DProject::RenderRayTracing()
 	const Array<SpotLight>& spotLights = currentModel->SpotLights();
 	const uint64 numSpotLights = Min<uint64>(spotLights.Size(), MaxSpotLights);
 
-	spotLightBuffer.UpdateData(spotLights.Data(), spotLights.MemorySize(), 0);
+	if (numSpotLights > 0)
+		spotLightBuffer.UpdateData(spotLights.Data(), spotLights.MemorySize(), 0);
 
 	// Render the main forward pass
 	Texture& envCubMap = skyCache.CubeMap;
@@ -631,7 +632,12 @@ void MyD3DProject::RenderForward()
 	mainPassData.NumYTiles = lightCluster.NumYTiles();
 	mainPassData.ClusterTileSize = ClusterTileSize;
 	mainPassData.NumZTiles = NumZTiles;
+
 	mainPassData.RenderLights = AppSettings::RenderLights;
+	mainPassData.EnableDirectLighting = AppSettings::EnableDirectLighting;
+	mainPassData.EnableIndirectLighting = AppSettings::EnableIndirectLighting;
+	mainPassData.NormalMapIntensity = AppSettings::NormalMapIntensity;
+	mainPassData.RoughnessScale = AppSettings::RoughnessScale;
 
 	mainPassData.RTSize.x = (float)mainTarget.Width();
 	mainPassData.RTSize.y = (float)mainTarget.Height();

@@ -26,8 +26,13 @@ struct MainPassData
 	uint64 NumXTiles = 0;
 	uint64 NumYTiles = 0;
 	uint64 ClusterTileSize = 0;
-
+	
 	bool32 RenderLights = false;
+	bool32 EnableDirectLighting = true;
+	bool32 EnableIndirectLighting = true;
+
+	float NormalMapIntensity = 0.5;
+	float RoughnessScale = 1.0;
 
 	Float2 RTSize;
 	Float2 JitterOffset;
@@ -50,10 +55,15 @@ struct ShadingConstants
 	uint32 NumXYTiles = 0;
 	uint32 ClusterTileSize = 0;
 
+	bool32 RenderLights = false;
+	bool32 EnableDirectLighting = true;
+	bool32 EnableIndirectLighting = true;
+	bool32 Padding0 = false;
+
+	float NormalMapIntensity = 0.5;
+	float RoughnessScale = 1.0;
 	float NearClip = 0.0f;
 	float FarClip = 0.0f;
-	bool32 RenderLights = false;
-	float Padding1 = 0.0;
 
 	Float2 RTSize;
 	Float2 JitterOffset;

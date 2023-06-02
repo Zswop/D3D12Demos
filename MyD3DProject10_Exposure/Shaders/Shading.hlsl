@@ -20,10 +20,15 @@ struct ShadingConstants
 	uint NumXYTiles;
 	uint ClusterTileSize;
 
+	bool RenderLights;
+	bool EnableDirectLighting;
+	bool EnableIndirectLighting;
+	bool Padding0;
+
+	float NormalMapIntensity;
+	float RoughnessScale;
 	float NearClip;
 	float FarClip;
-	bool RenderLights;
-	float Padding1;
 
 	float2 RTSize;
 	float2 JitterOffset;
@@ -95,14 +100,15 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	float3 normalTS;
 	normalTS.xy = input.NormalMap.xy * 2.0f - 1.0f;
 	normalTS.z = sqrt(1.0f - saturate(normalTS.x * normalTS.x + normalTS.y * normalTS.y));
-	normalTS = lerp(float3(0, 0, 1), normalTS, 0.5);
+	normalTS = lerp(float3(0, 0, 1), normalTS, CBuffer.NormalMapIntensity);
 	float3 normalWS = normalize(mul(normalTS, input.TangentFrame));
 	
 	float4 albedoMap = input.AlbedoMap;
 	float metallic = saturate(input.MetallicMap);
 
 	float sqrtRoughness = input.RoughnessMap;
-	float roughness = sqrtRoughness * sqrtRoughness;
+	sqrtRoughness *= CBuffer.RoughnessScale;
+	float roughness = saturate(sqrtRoughness * sqrtRoughness);
 
 	float3 diffuseAlbedo = lerp(albedoMap.xyz, 0.0f, metallic);
 	float3 specularAlbedo = lerp(0.03f, albedoMap.xyz, metallic);
@@ -129,6 +135,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	float3 output = 0.0f;
 
 	// Add in the primary directional light
+	if (CBuffer.EnableDirectLighting)
 	{
 		float2 shadowMapSize;
 		float numSlices;
@@ -204,6 +211,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	}
 
 	// Add in the ambient
+	if (CBuffer.EnableIndirectLighting)
 	{
 		const float occlusion = 0.1f; // Darken the ambient since we don't have any sky occlusion
 		float3 ambient = EvalSH9Irradiance(normalWS, CBuffer.EnvSH) * InvPi;

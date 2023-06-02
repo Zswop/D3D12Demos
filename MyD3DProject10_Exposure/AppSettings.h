@@ -163,6 +163,11 @@ namespace AppSettings
 	extern SkyModesSetting SkyMode;
 
 	extern BoolSetting RenderLights;
+	extern BoolSetting EnableDirectLighting;
+	extern BoolSetting EnableIndirectLighting;
+	extern FloatSetting NormalMapIntensity;
+	extern FloatSetting RoughnessScale;
+
 	extern ScenesSetting CurrentScene;
 
 	extern MSAAModesSetting MSAAMode;
@@ -211,6 +216,8 @@ namespace AppSettings
 		float ISO;
 
 		float BloomExposure;
+		float BloomMagnitude;
+		float BloomBlurSigma;
 	};
 
 	inline float ISO_()
@@ -287,7 +294,7 @@ namespace AppSettings
 	static const Float3 SceneCameraPositions[] = 
 	{ 
 		Float3(-11.5f, 1.85f, -0.45f), 
-		Float3(0.0f, 2.5f, -6.0f)
+		Float3(0.5f, 2.5f, -6.0f)
 	};
 
 	static const Float2 SceneCameraRotations[] = 

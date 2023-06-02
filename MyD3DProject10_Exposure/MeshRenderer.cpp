@@ -465,7 +465,13 @@ void MeshRenderer::RenderMainPass(ID3D12GraphicsCommandList* cmdList, const Came
 	psConstants.NumXTiles = uint32(mainPassData.NumXTiles);
 	psConstants.NumXYTiles = uint32(mainPassData.NumXTiles * mainPassData.NumYTiles);
 	psConstants.ClusterTileSize = uint32(mainPassData.ClusterTileSize);
+
 	psConstants.RenderLights = mainPassData.RenderLights;
+	psConstants.EnableDirectLighting = mainPassData.EnableDirectLighting;
+	psConstants.EnableIndirectLighting = mainPassData.EnableIndirectLighting;
+	psConstants.NormalMapIntensity = mainPassData.NormalMapIntensity;
+	psConstants.RoughnessScale = mainPassData.RoughnessScale;
+
 	psConstants.NearClip = camera.NearClip();
 	psConstants.FarClip = camera.FarClip();
 

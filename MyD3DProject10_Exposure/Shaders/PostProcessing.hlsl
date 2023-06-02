@@ -28,6 +28,8 @@ cbuffer PPSettings : register(b1)
 	float ISO;
 
 	float BloomExposure;
+	float BloomMagnitude;
+	float BloomBlurSigma;
 };
 
 ConstantBuffer<SRVIndicesLayout> SRVIndices : register(b0);
@@ -91,7 +93,6 @@ float4 Blur(in PSInput input, float2 texScale, float sigma, bool normalize)
 	return color;
 }
 
-
 //=================================================================================================
 // Pixel Shader
 //=================================================================================================
@@ -128,12 +129,12 @@ float4 Bloom(in PSInput input) : SV_Target
 
 float4 BlurH(in PSInput input) : SV_Target
 {
-	return Blur(input, float2(1, 0), 2.5f, false);
+	return Blur(input, float2(1, 0), BloomBlurSigma, false);
 }
 
 float4 BlurV(in PSInput input) : SV_Target
 {
-	return Blur(input, float2(0, 1), 2.5f, false);
+	return Blur(input, float2(0, 1), BloomBlurSigma, false);
 }
 
 // Applies exposure and tone mapping to the input
@@ -148,7 +149,7 @@ float4 UberPost(in PSInput input) : SV_Target0
 	float3 color = inputTexture0.Sample(PointSampler, input.TexCoord).xyz;
 
 	// Add bloom
-	color += inputTexture1.Sample(LinearSampler, input.TexCoord).xyz * exp2(BloomExposure);
+	color += BloomMagnitude * exp2(BloomExposure) * inputTexture1.Sample(LinearSampler, input.TexCoord).xyz;
 
 	ExposureConstants expConstants;
 	expConstants.ExposureMode = ExposureMode;

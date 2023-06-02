@@ -124,6 +124,11 @@ namespace AppSettings
 	SkyModesSetting SkyMode;
 
 	BoolSetting RenderLights;
+	BoolSetting EnableDirectLighting;
+	BoolSetting EnableIndirectLighting;
+	FloatSetting NormalMapIntensity;
+	FloatSetting RoughnessScale;
+
 	ScenesSetting CurrentScene;
 
 	MSAAModesSetting MSAAMode;
@@ -193,6 +198,18 @@ namespace AppSettings
 		RenderLights.Initialize("RenderLights", "Scene", "Render Lights", "Enable or disable deferred light rendering", false);
 		Settings.AddSetting(&RenderLights);
 
+		EnableDirectLighting.Initialize("EnableDirectLighting", "Scene", "Enable Direct Lighting", "Enables direct lighting", true);
+		Settings.AddSetting(&EnableDirectLighting);
+
+		EnableIndirectLighting.Initialize("EnableIndirectLighting", "Scene", "Enable Indirect Lighting", "Enables indirect lighting", true);
+		Settings.AddSetting(&EnableIndirectLighting);
+
+		NormalMapIntensity.Initialize("NormalMapIntensity", "Scene", "Normal Map Intensity", "Intensity of the normal map", 0.5000f, 0.0000f, 1.0000f, 0.0100f, ConversionMode::None, 1.0000f);
+		Settings.AddSetting(&NormalMapIntensity);
+
+		RoughnessScale.Initialize("RoughnessScale", "Scene", "Specular Roughness Scale", "Global scale applied to all material roughness values", 1.0000f, 0.0100f, 340282300000000000000000000000000000000.0000f, 0.0100f, ConversionMode::None, 1.0000f);
+		Settings.AddSetting(&RoughnessScale);
+
 		MSAAMode.Initialize("MSAAMode", "Anti Aliasing", "MSAA Mode", "MSAA mode to use for rendering", MSAAModes::MSAANone, 4, MSAAModesLabels);
 		Settings.AddSetting(&MSAAMode);
 
@@ -214,7 +231,7 @@ namespace AppSettings
 		JitterMode.Initialize("JitterMode", "Anti Aliasing", "Jitter Mode", "", JitterModes::Jitter2x, 6, JitterModesLabels);
 		Settings.AddSetting(&JitterMode);
 
-		ExposureMode.Initialize("ExposureMode", "Camera Controls", "Exposure Mode", "Specifies how exposure should be controled", ExposureModes::Automatic, 4, ExposureModesLabels);
+		ExposureMode.Initialize("ExposureMode", "Camera Controls", "Exposure Mode", "Specifies how exposure should be controled", ExposureModes::ManualSimple, 4, ExposureModesLabels);
 		Settings.AddSetting(&ExposureMode);
 
 		ManualExposure.Initialize("ManualExposure", "Camera Controls", "Exposure", "Simple exposure value applied to the scene before tone mapping (uses log2 scale)", -14.0000f, -24.0000f, 24.0000f, 0.1000f, ConversionMode::None, 1.0000f);
@@ -279,6 +296,8 @@ namespace AppSettings
 		ppSettings.ISO = ISO_();
 
 		ppSettings.BloomExposure = BloomExposure;
+		ppSettings.BloomMagnitude = BloomMagnitude;
+		ppSettings.BloomBlurSigma = BloomBlurSigma;
 		DX12::BindTempConstantBuffer(cmdList, ppSettings, rootParameter, CmdListMode::Graphics);
 	}
 }
