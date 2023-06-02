@@ -413,35 +413,48 @@ void Model::GenerateBox(const Float3& position, const Float3& dimensions, const 
 
 void Model::GenerateTestScene()
 {
-	meshMaterials.Init(3);
-	meshMaterials[0].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Default.dds";
-	meshMaterials[0].TextureNames[uint64(MaterialTextureType::Normal)] = L"DefaultNormalMap.dds";
-	
-	meshMaterials[1].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Sponza_Bricks_a_Albedo.png";
-	meshMaterials[1].TextureNames[uint64(MaterialTextureType::Normal)] = L"Sponza_Bricks_a_Normal.png";
-	meshMaterials[1].TextureNames[uint64(MaterialTextureType::Roughness)] = L"Sponza_Bricks_a_Roughness.png";
+	meshMaterials.Init(5);
+	meshMaterials[0].TextureNames[uint64(MaterialTextureType::Albedo)] = L"White.png";
+	meshMaterials[0].TextureNames[uint64(MaterialTextureType::Normal)] = L"White_NRM.png";
 
-	meshMaterials[2].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Sponza_Floor_diffuse.png";
-	meshMaterials[2].TextureNames[uint64(MaterialTextureType::Normal)] = L"Sponza_Floor_normal.png";
-	meshMaterials[2].TextureNames[uint64(MaterialTextureType::Roughness)] = L"Sponza_Floor_roughness.png";
+	meshMaterials[1].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Blue.png";
+	meshMaterials[1].TextureNames[uint64(MaterialTextureType::Normal)] = L"Blue_NRM.png";
+
+	meshMaterials[2].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Green.png";
+	meshMaterials[2].TextureNames[uint64(MaterialTextureType::Normal)] = L"Green_NRM.png";
+
+	meshMaterials[3].TextureNames[uint64(MaterialTextureType::Albedo)] = L"Red.png";
+	meshMaterials[3].TextureNames[uint64(MaterialTextureType::Normal)] = L"Red_NRM.png";
 
 	wstring fileDirectory = L"Content\\Textures\\";
 	LoadMaterialResources(meshMaterials, fileDirectory, false, materialTextures);
 
 	const uint64 uDivisions = 20;
 	const uint64 vDivisions = 20;
-	const uint64 numVerts = NumPlaneVerts + NumBoxIndices + NumSphereVerts(uDivisions, vDivisions);
-	const uint64 numIndices = NumPlaneIndices + NumBoxIndices + NumSphereIndices(uDivisions, vDivisions);
+
+	const uint64 sphereVerts = NumSphereVerts(uDivisions, vDivisions);
+	const uint64 sphereIndices = NumSphereIndices(uDivisions, vDivisions);
+
+	const uint64 numVerts = NumBoxVerts * 4 + sphereVerts;
+	const uint64 numIndices = NumBoxIndices * 4 + sphereIndices;
 
 	vertices.Init(numVerts);
 	indices.Init(numIndices);
 
-	meshes.Init(3);
-	meshes[0].InitPlane(Float3(0.0f, 0.0f, 0.0f), Float2(20.0f), Quaternion(), 2, vertices.Data(), indices.Data());
-	meshes[1].InitBox(Float3(0.0f, 1.0f, 0.0f), Float3(2.0f), Quaternion::FromEuler(0, Framework::DegToRad(45), 0), 1, &vertices[NumPlaneVerts], &indices[NumPlaneIndices]);
-	meshes[2].InitSphere(Float3(0.0f, 2.5f, 0.0f), 1, Quaternion(), 0, &vertices[NumPlaneVerts + NumBoxVerts],
-		&indices[NumPlaneIndices + NumBoxIndices], uDivisions, vDivisions);
-	
+	const Float3 floorPos = Float3(0.0f, 1.0f, 0.0f);
+	const Float3 floorDim = Float3(4.0f, 0.2f, 3.0f);
+
+	const Float3 wallDim = Float3(floorDim.z, 0.2f, floorDim.z);
+	const float wallPosX = 0.5f * (floorDim.x + floorDim.y);
+	const float wallPosY = 0.5f * (floorDim.z + floorDim.y);
+
+	meshes.Init(5);
+	meshes[0].InitBox(floorPos, floorDim, Quaternion(), 0, vertices.Data(), indices.Data());
+	meshes[1].InitBox(floorPos + Float3(wallPosX, wallPosY, 0.0f), wallDim, Quaternion::FromEuler(0, 0, Framework::DegToRad(90)), 1, &vertices[NumBoxVerts], &indices[NumBoxIndices]);
+	meshes[2].InitBox(floorPos + Float3(-wallPosX, wallPosY, 0.0f), wallDim, Quaternion::FromEuler(0, 0, Framework::DegToRad(-90)), 2, &vertices[2 * NumBoxVerts], &indices[2 * NumBoxIndices]);
+	meshes[3].InitBox(floorPos + Float3(0, wallPosY, wallPosY), floorDim, Quaternion::FromEuler(Framework::DegToRad(90), 0, 0), 3, &vertices[3 * NumBoxVerts], &indices[3 * NumBoxIndices]);
+	meshes[4].InitSphere(Float3(0.0f, 1.6f, 0.0f), 1, Quaternion(), 0, &vertices[4 * NumBoxVerts], &indices[4 * NumBoxIndices], uDivisions, vDivisions);
+
 	CreateBuffers();
 }
 

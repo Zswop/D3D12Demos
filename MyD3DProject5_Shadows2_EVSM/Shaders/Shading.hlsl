@@ -108,6 +108,7 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 	float3 normalTS;
 	normalTS.xy = input.NormalMap.xy * 2.0f - 1.0f;
 	normalTS.z = sqrt(1.0f - saturate(normalTS.x * normalTS.x + normalTS.y * normalTS.y));
+	normalTS = lerp(float3(0, 0, 1), normalTS, 0.5f);
 	float3 normalWS = normalize(mul(normalTS, input.TangentFrame));
 
 	float4 albedoMap = input.AlbedoMap;
@@ -137,9 +138,6 @@ float3 ShadePixel(in ShadingInput input, in TextureCube specularCubemap, in Text
 
 		float sunShadowVisibility = SunShadowVisibility(positionWS, depthVS, vtxNormalWS, shadowPosOffset, 0.0f,
 			sunShadowMap, pcfSampler, vsmSampler, ShadowCBuffer);
-
-		//sunShadowVisibility = 1.0f;
-		//return float3(sunShadowVisibility, 0, 0);
 
 		output += CalcLighting(normalWS, sunDirectionWS, sunIrradiance, diffuseAlbedo, specularAlbedo,
 			roughness, positionWS, cameraPosWS) * sunShadowVisibility;

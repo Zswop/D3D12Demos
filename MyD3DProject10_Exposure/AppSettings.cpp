@@ -207,7 +207,7 @@ namespace AppSettings
 		NormalMapIntensity.Initialize("NormalMapIntensity", "Scene", "Normal Map Intensity", "Intensity of the normal map", 0.5000f, 0.0000f, 1.0000f, 0.0100f, ConversionMode::None, 1.0000f);
 		Settings.AddSetting(&NormalMapIntensity);
 
-		RoughnessScale.Initialize("RoughnessScale", "Scene", "Specular Roughness Scale", "Global scale applied to all material roughness values", 1.0000f, 0.0100f, 340282300000000000000000000000000000000.0000f, 0.0100f, ConversionMode::None, 1.0000f);
+		RoughnessScale.Initialize("RoughnessScale", "Scene", "Specular Roughness Scale", "Global scale applied to all material roughness values", 1.0000f, 0.0100f, 10.0f, 0.0100f, ConversionMode::None, 1.0000f);
 		Settings.AddSetting(&RoughnessScale);
 
 		MSAAMode.Initialize("MSAAMode", "Anti Aliasing", "MSAA Mode", "MSAA mode to use for rendering", MSAAModes::MSAANone, 4, MSAAModesLabels);

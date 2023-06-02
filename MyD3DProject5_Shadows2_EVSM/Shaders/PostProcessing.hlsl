@@ -99,7 +99,7 @@ float4 ToneMap(in PSInput input) : SV_Target0
 	color *= exp2(-14.0f) / FP16Scale;
 
 	// Tone map to sRGB color space with the appropriate transfer function applied
-	// color = ToneMapNeutral(color);
+	color = ToneMapNeutral(color);
 
 	return float4(color, 1.0f);
 }

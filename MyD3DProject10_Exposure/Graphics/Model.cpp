@@ -735,7 +735,7 @@ void Model::GenerateTestScene()
 	meshes[1].InitBox(floorPos + Float3(wallPosX, wallPosY, 0.0f), wallDim, Quaternion::FromEuler(0, 0, Framework::DegToRad(90)), 1, &vertices[NumBoxVerts], &indices[NumBoxIndices]);
 	meshes[2].InitBox(floorPos + Float3(-wallPosX, wallPosY, 0.0f), wallDim, Quaternion::FromEuler(0, 0, Framework::DegToRad(-90)), 2, &vertices[2 * NumBoxVerts], &indices[2 * NumBoxIndices]);
 	meshes[3].InitBox(floorPos + Float3(0, wallPosY, wallPosY), floorDim, Quaternion::FromEuler(Framework::DegToRad(90), 0, 0), 3, &vertices[3 * NumBoxVerts], &indices[3 * NumBoxIndices]);
-	meshes[4].InitSphere(Float3(0.0f, 1.5f, 0.0f), 1, Quaternion(), 0, &vertices[4 * NumBoxVerts], &indices[4 * NumBoxIndices], uDivisions, vDivisions);
+	meshes[4].InitSphere(Float3(0.0f, 1.6f, 0.0f), 1, Quaternion(), 0, &vertices[4 * NumBoxVerts], &indices[4 * NumBoxIndices], uDivisions, vDivisions);
 
 	CreateBuffers();
 }

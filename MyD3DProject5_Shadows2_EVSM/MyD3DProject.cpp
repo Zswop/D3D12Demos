@@ -150,8 +150,8 @@ void MyD3DProject::Initialize()
 	DX12::FlushGPU();
 	meshRenderer.Initialize(currentModel);
 
-	camera.SetPosition(Float3(0.0f, 3.2f, -3.0f));
-	camera.SetXRotation(Framework::DegToRad(15));
+	camera.SetPosition(Float3(0.0f, 3.2f, -5.0f));
+	camera.SetXRotation(Framework::DegToRad(10));
 	//camera.SetYRotation(Framework::DegToRad(30));
 
 	skybox.Initialize();
