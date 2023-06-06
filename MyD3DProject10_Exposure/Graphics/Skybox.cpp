@@ -386,7 +386,7 @@ void Skybox::RenderCommon(ID3D12GraphicsCommandList* cmdList, const Texture* env
 	vsConstants.Projection = projection;
 	DX12::BindTempConstantBuffer(cmdList, vsConstants, RootParam_VSCBuffer, CmdListMode::Graphics);
 
-	psConstants.Scale = scale;
+	psConstants.Scale = scale;	
 	psConstants.EnvMapIdx = environmentMap->SRV;
 	DX12::BindTempConstantBuffer(cmdList, psConstants, RootParam_PSCBuffer, CmdListMode::Graphics);
 
@@ -405,7 +405,7 @@ void Skybox::RenderEnvironmentMap(ID3D12GraphicsCommandList* cmdList, const Floa
 	const Float4x4& projection, const Texture* environmentMap, Float3 scale)
 {
 	PIXMarker mark(cmdList, "Skybox Render Environment Map");
-
+	
 	psConstants.CosSunAngularRadius = 0.0f;
 	RenderCommon(cmdList, environmentMap, view, projection, scale);
 }

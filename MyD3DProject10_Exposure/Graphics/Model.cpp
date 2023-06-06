@@ -550,7 +550,7 @@ void Model::CreateWithAssimp(const ModelLoadSettings& settings)
 		{
 			PointLight& dstLight = pointLights[numPointLights++];
 			dstLight.Position = ConvertVector(srcLight.mPosition);
-			dstLight.Intensity = ConvertColor(srcLight.mColorDiffuse);
+			dstLight.Intensity = ConvertColor(srcLight.mColorDiffuse) * FP16Scale;
 		}
 	}
 

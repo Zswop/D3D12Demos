@@ -8,7 +8,6 @@ struct VSConstants
 {
 	row_major float4x4 View;
 	row_major float4x4 Projection;
-	//float3 Bias;
 };
 
 struct PSConstants
@@ -16,6 +15,7 @@ struct PSConstants
 	float3 SunDirection;
 	float CosSunAngularRadius;
 	float3 SunLuminance;
+	uint Padding;
 	float3 Scale;
 	uint EnvMapIdx;
 };
@@ -72,6 +72,7 @@ float4 SkyboxPS(in VSOutput input) : SV_Target
 	// Sample the environment map
 	TextureCube envMap = TexCubeTable[PSCBuffer.EnvMapIdx];
 	float3 color = envMap.Sample(LinearSampler, normalize(input.TexCoord)).xyz;
+	
 
 	// Draw a circle for the sun
 	float3 dir = normalize(input.TexCoord);

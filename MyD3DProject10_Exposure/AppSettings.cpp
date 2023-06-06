@@ -194,7 +194,7 @@ namespace AppSettings
 
 		GroundAlbedo.Initialize("GroundAlbedo", "Scene", "Ground Albedo", "Ground albedo color used for procedural sun and sky model", Float3(0.2500f, 0.2500f, 0.2500f), false, -340282300000000000000000000000000000000.0000f, 340282300000000000000000000000000000000.0000f, 0.0100f, ColorUnit::None);
 		Settings.AddSetting(&GroundAlbedo);
-
+		
 		RenderLights.Initialize("RenderLights", "Scene", "Render Lights", "Enable or disable deferred light rendering", false);
 		Settings.AddSetting(&RenderLights);
 
